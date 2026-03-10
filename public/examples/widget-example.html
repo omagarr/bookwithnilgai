@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ski-Lifts Chat Widget Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #1b3a4b;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .code-block {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #1b3a4b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #2b4a5b;
+    }
+    .status {
+      padding: 10px;
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Ski-Lifts Chat Widget Example</h1>
+    <p class="subtitle">This page demonstrates the floating widget version of the Ski-Lifts chat interface.</p>
+
+    <div class="section">
+      <h2>About the Widget</h2>
+      <p>The widget version creates a floating chat interface that:</p>
+      <ul>
+        <li>Appears as a button in the corner of the page</li>
+        <li>Can be minimized and maximized</li>
+        <li>Maintains state across page sessions</li>
+        <li>Works on all screen sizes</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Integration Code</h2>
+      <p>Add this simple script tag to your website:</p>
+      <div class="code-block">
+&lt;script src="https://ski-lifts.nilgai.travel/widget.js"&gt;&lt;/script&gt;
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Widget Controls</h2>
+      <p>You can control the widget programmatically:</p>
+      <div class="button-group">
+        <button onclick="window.SkiLiftsChat && window.SkiLiftsChat.maximize()">Open Widget</button>
+        <button onclick="window.SkiLiftsChat && window.SkiLiftsChat.minimize()">Minimize Widget</button>
+        <button onclick="window.SkiLiftsChat && window.SkiLiftsChat.toggle()">Toggle Widget</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Custom Configuration</h2>
+      <p>You can customize the widget position and behavior:</p>
+      <div class="code-block">
+&lt;script&gt;
+  window.__CHAT_WIDGET_CONFIG = {
+    position: 'bottom-right',  // or 'bottom-left', 'top-right', 'top-left'
+    initiallyMinimized: true    // Start minimized or expanded
+  };
+&lt;/script&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/widget.js"&gt;&lt;/script&gt;
+      </div>
+    </div>
+
+    <div class="status">
+      <strong>Widget Status:</strong> The widget should appear in the bottom-right corner of this page.
+      <br>Click the chat button to interact with Claire, your AI travel assistant!
+    </div>
+  </div>
+
+  <!-- Load the widget for this demo -->
+  <script>
+    // For local development, use local URLs
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      window.__CHAT_WIDGET_CONFIG = {
+        widgetUrl: 'http://localhost:3001',
+        apiUrl: 'http://localhost:3000',
+        position: 'bottom-right',
+        initiallyMinimized: true
+      };
+    }
+  </script>
+  <script src="../widget.js"></script>
+</body>
+</html>

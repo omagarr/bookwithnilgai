@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ski-Lifts Chat Embed Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+    .header {
+      background: linear-gradient(135deg, #1b3a4b 0%, #2b4a5b 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 2.5em;
+    }
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .example-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    @media (max-width: 768px) {
+      .example-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .example-box {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .example-box h2 {
+      color: #1b3a4b;
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+    .code-block {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      margin: 15px 0;
+    }
+    
+    /* Different embed container styles */
+    .embed-container-banner {
+      width: 100%;
+      height: 400px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 20px;
+      box-sizing: border-box;
+      margin: 20px 0;
+    }
+    
+    .embed-container-sidebar {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    
+    .embed-container-fullwidth {
+      width: 100%;
+      height: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    
+    .embed-container-custom {
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      margin: 20px auto;
+      border: 3px solid #1b3a4b;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .info-box {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+    
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+    .feature-list li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+    .feature-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    
+    .tab-container {
+      margin: 20px 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      color: #1b3a4b;
+      border-bottom-color: #1b3a4b;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Ski-Lifts Chat Embed Examples</h1>
+    <p>Inline embeddable chat interface that adapts to any container</p>
+  </div>
+
+  <div class="container">
+    <div class="info-box">
+      <strong>About the Embed Version:</strong> Unlike the floating widget, the embed version is designed to be placed inline within your page content. It automatically adapts to the size of its container and is always in expanded form.
+    </div>
+
+    <div class="example-grid">
+      <div class="example-box">
+        <h2>📊 Features</h2>
+        <ul class="feature-list">
+          <li>Inline placement within any container</li>
+          <li>Responsive and adapts to container size</li>
+          <li>No minimize/maximize - always expanded</li>
+          <li>Perfect for banners, sidebars, or dedicated sections</li>
+          <li>Multiple embeds on the same page</li>
+          <li>Customizable dimensions and styling</li>
+        </ul>
+      </div>
+
+      <div class="example-box">
+        <h2>🚀 Quick Start</h2>
+        <p>Add the embed with just two lines of code:</p>
+        <div class="code-block">
+&lt;div data-ski-lifts-embed&gt;&lt;/div&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+        </div>
+        <p>Or programmatically:</p>
+        <div class="code-block">
+&lt;div id="chat-container"&gt;&lt;/div&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  SkiLiftsEmbed.init('#chat-container', {
+    height: '500px',
+    width: '100%'
+  });
+&lt;/script&gt;
+        </div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <h2>🎨 Banner Embed Example</h2>
+      <p>Perfect for hero sections or promotional banners:</p>
+      <div class="embed-container-banner" data-ski-lifts-embed data-embed-height="100%" data-embed-border-radius="8px">
+        <!-- Chat embed will be inserted here -->
+      </div>
+      <div class="code-block">
+&lt;div class="banner-container" data-ski-lifts-embed data-embed-height="100%"&gt;&lt;/div&gt;
+      </div>
+    </div>
+
+    <div class="example-box">
+      <h2>📱 Sidebar Embed Example</h2>
+      <p>Great for sidebars or dedicated help sections:</p>
+      <div class="embed-container-sidebar" id="sidebar-embed">
+        <!-- Chat embed will be inserted here -->
+      </div>
+      <div class="code-block">
+&lt;div id="sidebar-embed" style="height: 600px;"&gt;&lt;/div&gt;
+&lt;script&gt;
+  SkiLiftsEmbed.init('#sidebar-embed', {
+    height: '100%',
+    borderRadius: '0'
+  });
+&lt;/script&gt;
+      </div>
+    </div>
+
+    <div class="example-box">
+      <h2>🖼️ Full Width Embed Example</h2>
+      <p>Ideal for dedicated support pages or contact sections:</p>
+      <div class="embed-container-fullwidth" id="fullwidth-embed">
+        <!-- Chat embed will be inserted here -->
+      </div>
+    </div>
+
+    <div class="example-box">
+      <h2>⚙️ Advanced Configuration</h2>
+      <div class="tab-container">
+        <div class="tabs">
+          <button class="tab active" onclick="showTab('declarative')">Declarative</button>
+          <button class="tab" onclick="showTab('programmatic')">Programmatic</button>
+          <button class="tab" onclick="showTab('multiple')">Multiple Embeds</button>
+        </div>
+        
+        <div id="declarative" class="tab-content active">
+          <p>Use data attributes for configuration:</p>
+          <div class="code-block">
+&lt;div 
+  data-ski-lifts-embed
+  data-embed-height="500px"
+  data-embed-width="100%"
+  data-embed-border-radius="12px"
+  data-embed-class="custom-chat-class"
+&gt;&lt;/div&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+          </div>
+        </div>
+        
+        <div id="programmatic" class="tab-content">
+          <p>Initialize with JavaScript for more control:</p>
+          <div class="code-block">
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // Wait for DOM ready
+  SkiLiftsEmbed.ready.then(() => {
+    // Initialize embed with custom options
+    const iframe = SkiLiftsEmbed.init('#my-container', {
+      height: '600px',
+      width: '100%',
+      borderRadius: '16px',
+      style: {
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+      }
+    });
+    
+    // You can access the iframe element if needed
+    console.log('Embed initialized:', iframe);
+  });
+&lt;/script&gt;
+          </div>
+        </div>
+        
+        <div id="multiple" class="tab-content">
+          <p>You can have multiple embeds on the same page:</p>
+          <div class="code-block">
+&lt;div id="embed1"&gt;&lt;/div&gt;
+&lt;div id="embed2"&gt;&lt;/div&gt;
+
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // Initialize multiple embeds
+  SkiLiftsEmbed.init('#embed1', { height: '400px' });
+  SkiLiftsEmbed.init('#embed2', { height: '500px' });
+  
+  // Or auto-initialize all with data attributes
+  SkiLiftsEmbed.initAll();
+&lt;/script&gt;
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <h2>🎯 Custom Styled Container</h2>
+      <p>With custom border and shadow styling:</p>
+      <div class="embed-container-custom" id="custom-embed">
+        <!-- Chat embed will be inserted here -->
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Pro Tip:</strong> The embed version is perfect when you want the chat to be a permanent part of your page layout, while the widget version is ideal for providing optional support that users can access when needed.
+    </div>
+  </div>
+
+  <script>
+    // Tab switching function
+    function showTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    }
+  </script>
+
+  <!-- Load the embed script -->
+  <script>
+    // For local development, detect and use local URLs
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Override the default config for local development
+      window.SkiLiftsEmbed = {
+        config: {
+          embedUrl: 'http://localhost:3001/embed',
+          apiUrl: 'http://localhost:3000',
+          defaultHeight: '100%',
+          defaultWidth: '100%'
+        }
+      };
+    }
+  </script>
+  <script src="../embed.js"></script>
+  
+  <script>
+    // Additional programmatic initialization for specific containers
+    if (window.SkiLiftsEmbed) {
+      window.SkiLiftsEmbed.ready.then(() => {
+        // Initialize the sidebar embed programmatically (it already has an ID)
+        // Auto-init will handle the banner with data attribute
+        
+        // Initialize fullwidth embed
+        window.SkiLiftsEmbed.init('#fullwidth-embed', {
+          height: '100%',
+          borderRadius: '12px'
+        });
+        
+        // Initialize custom styled embed
+        window.SkiLiftsEmbed.init('#custom-embed', {
+          height: '100%',
+          borderRadius: '12px'
+        });
+      });
+    }
+  </script>
+</body>
+</html>

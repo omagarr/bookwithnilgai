@@ -1,0 +1,44 @@
+/* ChatWidget.module.css - Isolated styles for the chat widget */
+
+.chatWidgetContainer {
+  isolation: isolate;
+  contain: layout paint style;
+  box-sizing: border-box;
+  font-family: inherit;
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+.chatWidgetContainer * {
+  box-sizing: border-box;
+}
+
+/* Override any global styles that might affect the widget */
+.chatWidgetContainer button,
+.chatWidgetContainer input,
+.chatWidgetContainer textarea {
+  font-family: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+/* Positioning classes */
+.bottomRight {
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+}
+
+.bottomLeft {
+  bottom: 1.5rem !important;
+  left: 1.5rem !important;
+}
+
+.topRight {
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+}
+
+.topLeft {
+  top: 1.5rem !important;
+  left: 1.5rem !important;
+} 

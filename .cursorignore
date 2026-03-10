@@ -1,0 +1,22 @@
+# Cursor ignore file - Allow environment files for AI assistant
+# Standard ignores
+node_modules/
+.git/
+dist/
+build/
+.next/
+coverage/
+
+# Logs  
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Explicitly allow environment files
+!.env.local
+!.env.production
+!.env.staging
+!.env.example

@@ -1,0 +1,136 @@
+.transfer-option-bubble {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 380px;
+  transition: all 0.2s ease;
+}
+
+.transfer-option-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.transfer-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.transfer-image {
+  width: 120px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-right: 12px;
+  background: #f8f9fa;
+}
+
+.transfer-title h3 {
+  margin: 0;
+  color: #2B4570;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.eco-badge, .premium-badge, .budget-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.eco-badge {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.premium-badge {
+  background: #FFF8E1;
+  color: #F57C00;
+}
+
+.budget-badge {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.transfer-details {
+  margin: 12px 0;
+}
+
+.feature {
+  margin: 8px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.pricing {
+  margin: 12px 0;
+}
+
+.total-price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2B4570;
+}
+
+.per-person {
+  font-size: 14px;
+  color: #666;
+}
+
+.limited {
+  color: #F57C00;
+  font-weight: 500;
+}
+
+.book-now-btn, .enquire-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.book-now-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.enquire-btn {
+  background: #FFA000;
+  color: white;
+}
+
+.book-now-btn:hover, .enquire-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Chat message specific styles */
+.chat-message.ai {
+  display: flex;
+  justify-content: flex-start;
+  margin: 8px 0;
+}
+
+.chat-message.ai .transfer-option-bubble {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

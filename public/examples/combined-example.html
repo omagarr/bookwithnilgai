@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ski-Lifts Chat - Widget & Embed Combined Example</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+      line-height: 1.6;
+    }
+    
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #1b3a4b 0%, #2b4a5b 100%);
+      color: white;
+      padding: 80px 20px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    .hero p {
+      font-size: 1.3em;
+      opacity: 0.95;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    /* Main Layout */
+    .main-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    /* Comparison Section */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+    @media (max-width: 968px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .comparison-card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .comparison-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    .comparison-card h2 {
+      color: #1b3a4b;
+      margin-bottom: 15px;
+      font-size: 1.8em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .badge {
+      background: #4caf50;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.5em;
+      font-weight: normal;
+    }
+    .badge.embed {
+      background: #2196f3;
+    }
+    
+    .feature-grid {
+      display: grid;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .feature.embed .feature-icon {
+      background: #e3f2fd;
+      color: #2196f3;
+    }
+    
+    /* Use Case Section */
+    .use-cases {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 50px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .use-cases h2 {
+      color: #1b3a4b;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 2em;
+    }
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+    }
+    .use-case {
+      padding: 25px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #1b3a4b;
+    }
+    .use-case h3 {
+      color: #1b3a4b;
+      margin-bottom: 10px;
+    }
+    .use-case p {
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .use-case-type {
+      display: inline-block;
+      padding: 4px 10px;
+      background: white;
+      border-radius: 20px;
+      font-size: 0.85em;
+      color: #1b3a4b;
+      font-weight: 500;
+    }
+    
+    /* Live Demo Section */
+    .demo-section {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 50px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .demo-section h2 {
+      color: #1b3a4b;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+    .demo-container {
+      height: 500px;
+      border: 2px dashed #e0e0e0;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      background: #f8f9fa;
+    }
+    .demo-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #1b3a4b;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      z-index: 10;
+    }
+    
+    /* Code Examples */
+    .code-section {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 50px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .code-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .code-tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 16px;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .code-tab.active {
+      color: #1b3a4b;
+      border-bottom-color: #1b3a4b;
+    }
+    .code-content {
+      display: none;
+    }
+    .code-content.active {
+      display: block;
+    }
+    .code-block {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 60px 40px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+    .cta-section h2 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    .cta-section p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      opacity: 0.95;
+    }
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-button {
+      padding: 15px 30px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    .cta-button.secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+    }
+    
+    /* Notice Box */
+    .notice {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .notice strong {
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Ski-Lifts Chat Integration</h1>
+    <p>Two powerful ways to add AI-powered chat to your website: Floating Widget or Inline Embed</p>
+  </div>
+
+  <div class="main-container">
+    <!-- Comparison Section -->
+    <div class="comparison">
+      <div class="comparison-card">
+        <h2>
+          Widget Version
+          <span class="badge">Floating</span>
+        </h2>
+        <p>A floating chat button that appears in the corner of your page. Perfect for providing optional support without taking up page space.</p>
+        
+        <div class="feature-grid">
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <span>Minimizable floating interface</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <span>Appears on page corner</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <span>User-triggered interaction</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <span>Persistent across pages</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <span>Remembers minimize state</span>
+          </div>
+        </div>
+        
+        <div class="notice">
+          <strong>Active:</strong> The widget is currently loaded on this page. Look for the chat button in the bottom-right corner!
+        </div>
+      </div>
+
+      <div class="comparison-card">
+        <h2>
+          Embed Version
+          <span class="badge embed">Inline</span>
+        </h2>
+        <p>An inline chat interface that becomes part of your page layout. Ideal for dedicated support sections or prominent placement.</p>
+        
+        <div class="feature-grid">
+          <div class="feature embed">
+            <div class="feature-icon">✓</div>
+            <span>Inline page element</span>
+          </div>
+          <div class="feature embed">
+            <div class="feature-icon">✓</div>
+            <span>Adapts to container size</span>
+          </div>
+          <div class="feature embed">
+            <div class="feature-icon">✓</div>
+            <span>Always expanded</span>
+          </div>
+          <div class="feature embed">
+            <div class="feature-icon">✓</div>
+            <span>Multiple instances possible</span>
+          </div>
+          <div class="feature embed">
+            <div class="feature-icon">✓</div>
+            <span>Custom styling support</span>
+          </div>
+        </div>
+        
+        <div class="notice">
+          <strong>Demo:</strong> Scroll down to see a live embed example integrated into this page.
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="use-cases">
+      <h2>When to Use Each Version</h2>
+      <div class="use-case-grid">
+        <div class="use-case">
+          <h3>E-commerce Sites</h3>
+          <p>Use the widget for subtle support presence without interrupting the shopping experience.</p>
+          <span class="use-case-type">Widget Recommended</span>
+        </div>
+        <div class="use-case">
+          <h3>Contact Pages</h3>
+          <p>Embed the chat directly in your contact section as the primary communication method.</p>
+          <span class="use-case-type">Embed Recommended</span>
+        </div>
+        <div class="use-case">
+          <h3>Landing Pages</h3>
+          <p>Feature the embed prominently to encourage immediate engagement with visitors.</p>
+          <span class="use-case-type">Embed Recommended</span>
+        </div>
+        <div class="use-case">
+          <h3>Documentation Sites</h3>
+          <p>Float the widget to provide contextual help without covering important content.</p>
+          <span class="use-case-type">Widget Recommended</span>
+        </div>
+        <div class="use-case">
+          <h3>Support Centers</h3>
+          <p>Embed as the main interface in dedicated support sections or help desks.</p>
+          <span class="use-case-type">Embed Recommended</span>
+        </div>
+        <div class="use-case">
+          <h3>Corporate Websites</h3>
+          <p>Use both: widget for general pages, embed for contact/support sections.</p>
+          <span class="use-case-type">Both Options</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Embed Demo -->
+    <div class="demo-section">
+      <h2>Live Embed Demo</h2>
+      <p>This is how the embed version looks when integrated inline with your content:</p>
+      <div class="demo-container" data-ski-lifts-embed data-embed-height="100%">
+        <span class="demo-label">Embedded Chat Interface</span>
+        <!-- Embed will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Code Examples -->
+    <div class="code-section">
+      <h2>Integration Code</h2>
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="showCode('widget')">Widget Code</button>
+        <button class="code-tab" onclick="showCode('embed')">Embed Code</button>
+        <button class="code-tab" onclick="showCode('both')">Using Both</button>
+      </div>
+      
+      <div id="widget-code" class="code-content active">
+        <h3>Simple Widget Integration</h3>
+        <div class="code-block">
+&lt;!-- Add this before closing &lt;/body&gt; tag --&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/widget.js"&gt;&lt;/script&gt;
+
+&lt;!-- Optional: Custom configuration --&gt;
+&lt;script&gt;
+  window.__CHAT_WIDGET_CONFIG = {
+    position: 'bottom-right',
+    initiallyMinimized: true
+  };
+&lt;/script&gt;
+        </div>
+      </div>
+      
+      <div id="embed-code" class="code-content">
+        <h3>Simple Embed Integration</h3>
+        <div class="code-block">
+&lt;!-- Add where you want the chat to appear --&gt;
+&lt;div data-ski-lifts-embed style="height: 500px;"&gt;&lt;/div&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+
+&lt;!-- Or with custom options --&gt;
+&lt;div id="chat-container" style="height: 600px;"&gt;&lt;/div&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  SkiLiftsEmbed.init('#chat-container', {
+    height: '100%',
+    borderRadius: '12px'
+  });
+&lt;/script&gt;
+        </div>
+      </div>
+      
+      <div id="both-code" class="code-content">
+        <h3>Using Both Widget and Embed</h3>
+        <div class="code-block">
+&lt;!-- Embed in your contact section --&gt;
+&lt;section id="contact"&gt;
+  &lt;h2&gt;Get in Touch&lt;/h2&gt;
+  &lt;div data-ski-lifts-embed style="height: 500px;"&gt;&lt;/div&gt;
+&lt;/section&gt;
+
+&lt;!-- Scripts at the bottom of the page --&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/embed.js"&gt;&lt;/script&gt;
+&lt;script src="https://ski-lifts.nilgai.travel/widget.js"&gt;&lt;/script&gt;
+
+&lt;!-- Both will work independently without conflicts --&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+      <h2>Ready to Get Started?</h2>
+      <p>Choose the integration method that best fits your needs</p>
+      <div class="cta-buttons">
+        <button class="cta-button" onclick="window.SkiLiftsChat && window.SkiLiftsChat.maximize()">
+          Try the Widget
+        </button>
+        <a href="#demo" class="cta-button secondary">
+          View Embed Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Code tab switching
+    function showCode(type) {
+      // Remove active class from all tabs and contents
+      document.querySelectorAll('.code-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.code-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Add active class to selected tab and content
+      event.target.classList.add('active');
+      document.getElementById(type + '-code').classList.add('active');
+    }
+  </script>
+
+  <!-- Load both widget and embed scripts -->
+  <script>
+    // Configure for local development if needed
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Widget config
+      window.__CHAT_WIDGET_CONFIG = {
+        widgetUrl: 'http://localhost:3001',
+        apiUrl: 'http://localhost:3000',
+        position: 'bottom-right',
+        initiallyMinimized: true
+      };
+      
+      // Embed config will be set when script loads
+    }
+  </script>
+  
+  <!-- Load the embed script first -->
+  <script src="../embed.js"></script>
+  
+  <!-- Then load the widget script -->
+  <script src="../widget.js"></script>
+</body>
+</html>
