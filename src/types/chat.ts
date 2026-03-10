@@ -1,36 +1,138 @@
+// ==========================================
+// Scripted Conversation Types
+// ==========================================
+
+export interface ScriptStep {
+  /** All assistant messages to show for this step */
+  assistantMessages: ScriptedMessage[];
+  /** The scripted user message displayed when this step is triggered */
+  userMessage: string;
+  /** How to advance: 'userInput' = any text/click, 'cardSelect' = must click a card */
+  trigger: 'userInput' | 'cardSelect';
+}
+
+export interface ScriptedMessage {
+  content: string;
+  /** Milliseconds before showing this message (cumulative within step) */
+  delay: number;
+  flightOptions?: FlightOptionData[];
+  hotelOptions?: HotelOptionData[];
+  transferOptions?: TransferOptionData[];
+  experienceOptions?: ExperienceOptionData[];
+  tripSummary?: TripSummaryData;
+  bookingConfirmation?: BookingConfirmationData;
+  bookingProcessing?: boolean;
+  bookingComplete?: BookingCompleteData;
+}
+
+// ==========================================
+// Chat Message Type
+// ==========================================
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  attachments?: File[];
-  isSupersededSummary?: boolean; // Flag for superseded quote summary messages
-  isHidden?: boolean; // Flag for messages that should fade in after being rendered
-  transferOption?: {
-    image: string;
-    title: string;
-    badge: {
-      text: string;
-      type: 'eco' | 'premium' | 'budget';
-    };
-    feature: string;
-    fullFeature?: string; // Full description for tooltip
-    capacity: number | null;
-    luggage: number;
-    skis_snowboards: number; // HIDDEN: Currently not displayed in UI - TODO: Remove when bookingUrl supports ski/snowboard parameters
-    pricing: {
-      total: string;
-      perPerson?: string;
-      isLimited?: boolean;
-    };
-    buttonType: 'book' | 'enquire';
-    onButtonClick: () => void;
+  isHidden?: boolean;
+  // Rich content properties
+  flightOptions?: FlightOptionData[];
+  hotelOptions?: HotelOptionData[];
+  transferOptions?: TransferOptionData[];
+  experienceOptions?: ExperienceOptionData[];
+  tripSummary?: TripSummaryData;
+  bookingConfirmation?: BookingConfirmationData;
+  bookingProcessing?: boolean;
+  bookingComplete?: BookingCompleteData;
+}
+
+// ==========================================
+// Travel Card Data Types
+// ==========================================
+
+export interface FlightOptionData {
+  id: string;
+  airline: string;
+  departureTime: string;
+  arrivalTime: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  duration: string;
+  stops: number;
+  stopCity?: string;
+  price: number;
+  currency: string;
+}
+
+export interface HotelOptionData {
+  id: string;
+  name: string;
+  image: string;
+  stars: number;
+  location: string;
+  amenities: string[];
+  pricePerNight: number;
+  totalPrice: number;
+  currency: string;
+  nights: number;
+}
+
+export interface TransferOptionData {
+  id: string;
+  vehicleType: string;
+  image: string;
+  duration: string;
+  capacity: number;
+  luggage: number;
+  price: number;
+  currency: string;
+  badge?: {
+    text: string;
+    type: 'eco' | 'premium' | 'budget';
   };
 }
 
-export interface Attachment {
+export interface ExperienceOptionData {
   id: string;
-  name: string;
-  url: string;
-  type: string;
-} 
+  title: string;
+  image: string;
+  duration: string;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  pricePerPerson: number;
+  currency: string;
+}
+
+export interface TripSummaryData {
+  flight: {
+    label: string;
+    details: string;
+    price: number;
+  };
+  hotel: {
+    label: string;
+    details: string;
+    price: number;
+  };
+  transfer: {
+    label: string;
+    details: string;
+    price: number;
+  };
+  experiences: Array<{
+    label: string;
+    price: number;
+  }>;
+  currency: string;
+  totalPrice: number;
+}
+
+export interface BookingConfirmationData {
+  tripSummary: TripSummaryData;
+}
+
+export interface BookingCompleteData {
+  bookingRef: string;
+  tripSummary: TripSummaryData;
+}
