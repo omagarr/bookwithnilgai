@@ -51,8 +51,8 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   const [silenceTimeout, setSilenceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [speechOverlayText, setSpeechOverlayText] = useState('');
   const [speechBaseText, setSpeechBaseText] = useState('');
-  const [expandedFlights, setExpandedFlights] = useState<Set<string>>(
-    new Set(savedState?.expandedFlights ?? [])
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(
+    new Set(savedState?.expandedCards ?? [])
   );
   const [showCheckout, setShowCheckout] = useState(false);
   const [travelerCount, setTravelerCount] = useState<number>(savedState?.travelerCount ?? 2);
@@ -142,11 +142,11 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         isDemoComplete,
         selectedCards: Array.from(selectedCards),
         waitingForCardSelect,
-        expandedFlights: Array.from(expandedFlights),
+        expandedCards: Array.from(expandedCards),
         travelerCount,
       }));
     } catch { /* ignore quota errors */ }
-  }, [messages, currentStep, isDemoComplete, selectedCards, waitingForCardSelect, expandedFlights, travelerCount]);
+  }, [messages, currentStep, isDemoComplete, selectedCards, waitingForCardSelect, expandedCards, travelerCount]);
 
   // Scroll to bottom (with flex-col-reverse, scrollTop=0 is the visual bottom)
   const scrollToBottom = useCallback(() => {
@@ -273,10 +273,10 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
 
       const step = script[currentStep];
 
-      // Add the scripted user message
+      // Show the user's actual input for typed steps; use scripted message for card/button steps
       addMessage({
         role: 'user',
-        content: step.userMessage,
+        content: (step.trigger === 'userInput' && userText) ? userText : step.userMessage,
       });
 
       // Move to next step
@@ -300,6 +300,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   // Handle card selection
   const handleCardSelect = useCallback(
     (cardId: string, siblingIds?: string[]) => {
+      // Track whether this is the first selection in a single-select group
+      const isFirstSingleSelect = !!siblingIds && !siblingIds.some(id => selectedCardsRef.current.has(id));
+
       setSelectedCards((prev) => {
         const next = new Set(prev);
         // If siblings provided, deselect them first (single-select within group)
@@ -311,8 +314,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         next.add(cardId);
         return next;
       });
+
+      // Auto-advance on first selection for single-select groups (flights, hotels, transfers)
+      if (isFirstSingleSelect) {
+        // Small delay so the selected state renders before advancing
+        setTimeout(() => advanceScript(''), 600);
+      }
     },
-    []
+    [advanceScript]
   );
 
   // Handle card deselection
@@ -499,7 +508,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
           {/* Flight options */}
           {msg.flightOptions && (
             <div className="space-y-2 mt-2">
-              {(expandedFlights.has(msg.id) ? msg.flightOptions : msg.flightOptions.slice(0, 3)).map((flight, i) => (
+              {(expandedCards.has(msg.id) ? msg.flightOptions : msg.flightOptions.slice(0, 3)).map((flight, i) => (
                 <FlightOption
                   key={flight.id}
                   data={flight}
@@ -509,9 +518,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                   animationDelay={i * 150}
                 />
               ))}
-              {msg.flightOptions.length > 3 && !expandedFlights.has(msg.id) && (
+              {msg.flightOptions.length > 3 && !expandedCards.has(msg.id) && (
                 <button
-                  onClick={() => setExpandedFlights(prev => new Set(prev).add(msg.id))}
+                  onClick={() => setExpandedCards(prev => new Set(prev).add(msg.id))}
                   className="w-full py-2 text-sm font-medium text-[#0e3b43] bg-[#0e3b43]/10 rounded-xl hover:bg-[#0e3b43]/20 transition-colors"
                 >
                   Show more options
@@ -523,7 +532,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
           {/* Hotel options */}
           {msg.hotelOptions && (
             <div className="space-y-2 mt-2">
-              {msg.hotelOptions.map((hotel, i) => (
+              {(expandedCards.has(msg.id) ? msg.hotelOptions : msg.hotelOptions.slice(0, 3)).map((hotel, i) => (
                 <HotelOption
                   key={hotel.id}
                   data={hotel}
@@ -533,13 +542,21 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                   animationDelay={i * 150}
                 />
               ))}
+              {msg.hotelOptions.length > 3 && !expandedCards.has(msg.id) && (
+                <button
+                  onClick={() => setExpandedCards(prev => new Set(prev).add(msg.id))}
+                  className="w-full py-2 text-sm font-medium text-[#0e3b43] bg-[#0e3b43]/10 rounded-xl hover:bg-[#0e3b43]/20 transition-colors"
+                >
+                  Show more options
+                </button>
+              )}
             </div>
           )}
 
           {/* Transfer options */}
           {msg.transferOptions && (
             <div className="space-y-2 mt-2">
-              {msg.transferOptions.map((transfer, i) => (
+              {(expandedCards.has(msg.id) ? msg.transferOptions : msg.transferOptions.slice(0, 3)).map((transfer, i) => (
                 <TransferOption
                   key={transfer.id}
                   data={transfer}
@@ -549,13 +566,21 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                   animationDelay={i * 150}
                 />
               ))}
+              {msg.transferOptions.length > 3 && !expandedCards.has(msg.id) && (
+                <button
+                  onClick={() => setExpandedCards(prev => new Set(prev).add(msg.id))}
+                  className="w-full py-2 text-sm font-medium text-[#0e3b43] bg-[#0e3b43]/10 rounded-xl hover:bg-[#0e3b43]/20 transition-colors"
+                >
+                  Show more options
+                </button>
+              )}
             </div>
           )}
 
           {/* Experience options */}
           {msg.experienceOptions && (
             <div className="space-y-2 mt-2">
-              {msg.experienceOptions.map((exp, i) => (
+              {(expandedCards.has(msg.id) ? msg.experienceOptions : msg.experienceOptions.slice(0, 3)).map((exp, i) => (
                 <ExperienceOption
                   key={exp.id}
                   data={exp}
@@ -565,6 +590,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                   animationDelay={i * 150}
                 />
               ))}
+              {msg.experienceOptions.length > 3 && !expandedCards.has(msg.id) && (
+                <button
+                  onClick={() => setExpandedCards(prev => new Set(prev).add(msg.id))}
+                  className="w-full py-2 text-sm font-medium text-[#0e3b43] bg-[#0e3b43]/10 rounded-xl hover:bg-[#0e3b43]/20 transition-colors"
+                >
+                  Show more options
+                </button>
+              )}
             </div>
           )}
 
@@ -812,10 +845,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
               placeholder={isListening ? 'Listening...' : isLoading ? 'Thinking...' : 'Ask a follow up...'}
               disabled={isLoading}
               rows={2}
-              className="w-full pt-3 pb-1.5 px-4 bg-white rounded-t-xl text-gray-800
+              className="w-full pt-3 pb-1.5 px-4 bg-white rounded-t-xl text-sm text-gray-800
                          focus:outline-none focus:ring-0 placeholder:text-gray-400 resize-none
                          disabled:opacity-50"
-              style={{ fontSize: '16px' }}
             />
             <div className="flex items-center justify-end gap-1 pt-1 pb-2 px-3 bg-white rounded-b-xl min-h-[36px]">
               {isListening ? (

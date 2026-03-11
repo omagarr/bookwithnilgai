@@ -116,8 +116,8 @@ describe('Scripted Conversation', () => {
     });
   });
 
-  it('should have the correct number of steps (10)', () => {
-    expect(scriptedConversation.length).toBe(10);
+  it('should have the correct number of steps (13)', () => {
+    expect(scriptedConversation.length).toBe(13);
   });
 
   it('first step should trigger on userInput', () => {
@@ -208,9 +208,9 @@ describe('Scripted Conversation', () => {
     const script = getScriptedConversation(defaultState);
     // Step 4 (index 3): flight selected
     expect(script[3].userMessage).toContain('Air France');
-    // Step 5 (index 4): hotel selected
-    expect(script[4].userMessage).toContain('Hôtel Le Marais Boutique');
-    // Step 6 (index 5): transfer selected
-    expect(script[5].userMessage).toContain('private sedan');
+    // Step 6 (index 5): hotel selected
+    expect(script[5].userMessage).toContain('Hôtel Le Marais Boutique');
+    // Step 8 (index 7): transfer selected
+    expect(script[7].userMessage).toContain('private sedan');
   });
 });

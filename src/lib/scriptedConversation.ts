@@ -308,7 +308,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 4: Flight selected → Show hotels
+    // Step 4: Flight selected → Ask about accommodation preference
     {
       trigger: 'cardSelect',
       userMessage: sf
@@ -317,19 +317,27 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       assistantMessages: [
         {
           content: sf
-            ? `Excellent choice! ${sf.airline} ${sf.stops === 0 ? 'direct ' : ''}to ${sf.arrivalAirport} — confirmed for ${pax}. ✓`
-            : 'Flight confirmed! ✓',
+            ? `Excellent choice! ${sf.airline} ${sf.stops === 0 ? 'direct ' : ''}to ${sf.arrivalAirport} — confirmed for ${pax}. ✓\n\nNow for accommodation — are you looking for something boutique and central, or would you prefer to save on the hotel and splurge on experiences?`
+            : 'Flight confirmed! ✓\n\nAre you looking for something boutique and central, or prefer to keep costs down on the hotel?',
           delay: 1500,
         },
+      ],
+    },
+
+    // Step 5: User responds about hotel preference → Show hotels
+    {
+      trigger: 'userInput',
+      userMessage: 'Something central with good vibes',
+      assistantMessages: [
         {
-          content: "Now let me find the perfect place to stay. Here are top picks in central Paris:",
+          content: "Love it — I've filtered for character-rich stays in the best neighbourhoods. Here are my top picks:",
           delay: 1500,
           hotelOptions,
         },
       ],
     },
 
-    // Step 5: Hotel selected → Show transfers
+    // Step 6: Hotel selected → Ask about transfer preference
     {
       trigger: 'cardSelect',
       userMessage: sh
@@ -338,21 +346,29 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       assistantMessages: [
         {
           content: sh
-            ? `Great taste! ${sh.name} — ${sh.nights} nights booked. ✓`
-            : 'Hotel booked! ✓',
+            ? `Great taste! ${sh.name} — ${sh.nights} nights booked. ✓\n\nHow would you like to get from the airport to your hotel — private car, or happy to share a shuttle and save a bit?`
+            : 'Hotel booked! ✓\n\nHow would you like to get from the airport — private or shared?',
           delay: 1500,
         },
+      ],
+    },
+
+    // Step 7: User responds about transfer preference → Show transfers
+    {
+      trigger: 'userInput',
+      userMessage: 'Private would be nice, what are the options?',
+      assistantMessages: [
         {
           content: sh
-            ? `Let me arrange your airport transfer from CDG to ${sh.location}:`
-            : "Let me arrange your airport transfer:",
+            ? `Here are the transfer options from CDG to ${sh.location}:`
+            : "Here are your transfer options from CDG:",
           delay: 1500,
           transferOptions,
         },
       ],
     },
 
-    // Step 6: Transfer selected → Show experiences
+    // Step 8: Transfer selected → Ask about experiences
     {
       trigger: 'cardSelect',
       userMessage: st
@@ -361,19 +377,27 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       assistantMessages: [
         {
           content: st
-            ? `${st.vehicleType} transfer confirmed — pickup at CDG Terminal 2. ✓`
-            : 'Transfer confirmed! ✓',
+            ? `${st.vehicleType} transfer confirmed — pickup at CDG Terminal 2. ✓\n\nNow for the fun part! Any particular interests — culture, food & wine, sightseeing? Or shall I show you the most popular experiences?`
+            : 'Transfer confirmed! ✓\n\nAny particular interests for activities — culture, food, adventure?',
           delay: 1500,
         },
+      ],
+    },
+
+    // Step 9: User responds about experience preference → Show experiences
+    {
+      trigger: 'userInput',
+      userMessage: 'A mix of sightseeing and food experiences',
+      assistantMessages: [
         {
-          content: "Now for the fun part! Here are Paris must-do experiences for your weekend:",
+          content: "Perfect combo! Here are the best-rated experiences that match — you can add as many as you like:",
           delay: 1500,
           experienceOptions,
         },
       ],
     },
 
-    // Step 7: Experiences selected → Trip confirmation with total + checkout
+    // Step 10: Experiences selected → Trip confirmation with total + checkout
     {
       trigger: 'cardSelect',
       userMessage: se.length > 0
@@ -392,7 +416,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 8: Checkout → Trip summary
+    // Step 11: Checkout → Trip summary
     {
       trigger: 'cardSelect',
       userMessage: 'Proceed to checkout',
@@ -405,7 +429,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 9: Booking confirmation flow
+    // Step 12: Booking confirmation flow
     {
       trigger: 'cardSelect',
       userMessage: "Let's book it!",
@@ -420,7 +444,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 10: Booking complete
+    // Step 13: Booking complete
     {
       trigger: 'cardSelect',
       userMessage: 'Confirmed!',
