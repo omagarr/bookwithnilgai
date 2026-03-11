@@ -10,10 +10,10 @@ interface WelcomeSectionProps {
 }
 
 const suggestions = [
-  { icon: '✈️', text: 'Plan a weekend trip', message: 'I want to plan a weekend trip to Paris for 2 people' },
-  { icon: '🏨', text: 'Find hotels in Paris', message: 'Find me boutique hotels in central Paris' },
-  { icon: '🚗', text: 'Airport transfers', message: 'I need an airport transfer from CDG to central Paris' },
-  { icon: '🎯', text: 'Things to do', message: 'What are the best experiences in Paris this weekend?' },
+  { icon: '🏨', text: 'Find me a hotel', message: 'Help me find a hotel for my next trip' },
+  { icon: '✈️', text: 'Book a flight', message: 'I need to book a flight' },
+  { icon: '🚗', text: 'Arrange a transfer', message: 'I need an airport transfer' },
+  { icon: '🎯', text: 'Find experiences', message: 'What experiences can you help me find?' },
 ];
 
 export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
@@ -219,15 +219,15 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
 
   return (
     <div className="flex flex-col h-full px-6 py-10 antialiased relative">
-      <div className="mb-8">
+      <div className="mb-2">
         <div className="flex items-center justify-center mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/nilgai-logo.svg"
             alt="NilgAI"
-            width={150}
-            height={48}
-            className="h-12"
+            width={240}
+            height={76}
+            className="h-20"
           />
         </div>
         <p className="text-gray-600 text-sm leading-relaxed mt-4 hidden">
@@ -326,7 +326,7 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
         </form>
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-start">
+      <div className="flex flex-wrap gap-2">
         {suggestions.map((s) => (
           <SuggestionButton
             key={s.text}
@@ -358,7 +358,7 @@ function SuggestionButton({
   return (
     <button
       onClick={onClick}
-      className="px-3 py-1.5 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition-colors text-sm text-gray-500 flex items-center gap-2 font-medium"
+      className="px-3 py-1.5 bg-white rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm text-gray-500 flex items-center gap-2 font-medium"
     >
       <span className="text-base">{icon}</span>
       {text}

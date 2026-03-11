@@ -28,6 +28,11 @@ html, body {
   background: #94A3B8;
 }
 
+/* Ensure dark text for form elements (prevents inheriting white from dark parent pages) */
+input, textarea, select {
+  color: #374151 !important;
+}
+
 /* Box sizing */
 * {
   box-sizing: border-box;

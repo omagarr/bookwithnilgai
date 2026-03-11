@@ -8,7 +8,17 @@ import ChatInterface from './ChatInterface';
 export default function ChatPopup() {
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [initialMessage, setInitialMessage] = useState('');
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedState = localStorage.getItem('chatMinimized');
+        return savedState !== null ? JSON.parse(savedState) : true;
+      } catch {
+        return true;
+      }
+    }
+    return true;
+  });
 
   const handleStartChat = useCallback((message: string) => {
     setInitialMessage(message);
@@ -27,19 +37,25 @@ export default function ChatPopup() {
 
   const handleClose = useCallback(() => {
     setIsMinimized(true);
+    try {
+      localStorage.setItem('chatMinimized', 'true');
+    } catch {}
   }, []);
 
   const handleOpen = useCallback(() => {
     setIsMinimized(false);
+    try {
+      localStorage.setItem('chatMinimized', 'false');
+    } catch {}
   }, []);
 
   // Minimized state — floating button bottom-right
   if (isMinimized) {
     return (
-      <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
         <div className="bg-white py-2 px-4 rounded-full shadow-lg">
           <span className="text-[#161616] text-sm whitespace-nowrap font-medium">
-            AI Assistant
+            Jess from NilgAI
           </span>
         </div>
         <button
