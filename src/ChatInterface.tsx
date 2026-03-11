@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Send, Mic, ExternalLink, Globe, X } from 'lucide-react';
+import { Send, Mic, ExternalLink, Globe } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, ScriptStep } from '@/types/chat';
 import scriptedConversation from '@/lib/scriptedConversation';
@@ -19,9 +19,11 @@ import '@/styles/TravelCards.css';
 interface ChatInterfaceProps {
   initialMessage: string;
   onRestart: () => void;
+  onCheckoutChange?: (open: boolean) => void;
+  checkoutOpen?: boolean;
 }
 
-export default function ChatInterface({ initialMessage, onRestart }: ChatInterfaceProps) {
+export default function ChatInterface({ initialMessage, onRestart, onCheckoutChange, checkoutOpen }: ChatInterfaceProps) {
   // Restore persisted state from localStorage
   const savedState = typeof window !== 'undefined'
     ? (() => {
@@ -51,6 +53,19 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
     new Set(savedState?.expandedFlights ?? [])
   );
   const [showCheckout, setShowCheckout] = useState(false);
+
+  // Notify parent when checkout visibility changes
+  const toggleCheckout = useCallback((open: boolean) => {
+    setShowCheckout(open);
+    onCheckoutChange?.(open);
+  }, [onCheckoutChange]);
+
+  // Sync with parent-controlled checkout state (e.g. back button in header)
+  useEffect(() => {
+    if (checkoutOpen !== undefined && checkoutOpen !== showCheckout) {
+      setShowCheckout(checkoutOpen);
+    }
+  }, [checkoutOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
 
@@ -562,15 +577,15 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
-      {/* Trip total subheader */}
-      {tripTotal && (
+      {/* Trip total subheader (hidden when checkout overlay is open) */}
+      {tripTotal && !showCheckout && (
         <div className="flex-shrink-0 flex items-center justify-between px-5 py-2 bg-teal-50 border-b border-teal-100 shadow-[0_2px_6px_rgba(255,255,255,0.5)] z-10">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-600">Trip total:</span>
             <span className="text-sm font-bold text-gray-900">{tripTotal.currency}{tripTotal.total.toLocaleString()}</span>
           </div>
           <button
-            onClick={() => setShowCheckout(true)}
+            onClick={() => toggleCheckout(true)}
             className="text-[11px] font-bold tracking-wider text-teal-700 hover:text-teal-900 transition-colors"
           >
             CHECKOUT
@@ -581,25 +596,27 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
       {/* Checkout overlay */}
       {showCheckout && tripTotal && (
         <div className="absolute inset-0 z-50 bg-white flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900">Your trip summary</h2>
-            <button onClick={() => setShowCheckout(false)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-
           {/* Summary items */}
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-            {tripTotal.items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div className="min-w-0">
-                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">{item.label}</div>
-                  <div className="text-sm text-gray-800 truncate">{item.detail}</div>
+            {tripTotal.items.map((item, i) => {
+              const badgeColor: Record<string, string> = {
+                Flight: 'bg-indigo-100 text-indigo-700',
+                Hotel: 'bg-amber-100 text-amber-700',
+                Transfer: 'bg-emerald-100 text-emerald-700',
+                Experience: 'bg-purple-100 text-purple-700',
+              };
+              return (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+                  <div className="min-w-0">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide mb-1 ${badgeColor[item.label] || 'bg-gray-100 text-gray-600'}`}>
+                      {item.label}
+                    </span>
+                    <div className="text-sm text-gray-800 truncate">{item.detail}</div>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-4">{tripTotal.currency}{item.price}</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-4">{tripTotal.currency}{item.price}</span>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Total */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-200">
@@ -610,11 +627,11 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
             {/* Booking link preview */}
             <div
               className="border border-gray-200 hover:border-gray-300 rounded-lg p-3 mt-4 cursor-pointer transition-all duration-200 bg-gray-50/50 hover:bg-gray-50 hover:shadow-sm"
-              onClick={() => window.open('https://book.nilgai.travel/checkout/NLG-PAR-2026', '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open('https://kayak.co.uk', '_blank', 'noopener,noreferrer')}
             >
               <div className="flex gap-3">
-                <div className="w-14 h-14 flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">✈️</span>
+                <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img src="/Kayak.svg" alt="Kayak" className="w-full h-full" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
@@ -627,13 +644,17 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                       </p>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         <Globe className="w-3 h-3" />
-                        <span className="truncate">book.nilgai.travel</span>
+                        <span className="truncate">kayak.co.uk</span>
                       </div>
                     </div>
                     <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="text-center mt-4">
+              <a href="https://nilgai.ai/" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Powered by NilgAI</a>
             </div>
           </div>
         </div>

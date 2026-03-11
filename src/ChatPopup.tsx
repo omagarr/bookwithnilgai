@@ -71,6 +71,8 @@ export default function ChatPopup() {
     } catch {}
   }, []);
 
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
   // Minimized state — floating button bottom-right
   if (isMinimized) {
     return (
@@ -102,7 +104,19 @@ export default function ChatPopup() {
     <div className="chat-window fixed bottom-6 right-6 md:max-w-[400px] w-[calc(100%-1.5rem)] max-w-[400px] bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
       <div className="w-full h-[600px] md:h-[650px] flex flex-col min-h-0">
         {/* Header */}
-        {hasStartedChat ? (
+        {hasStartedChat && isCheckoutOpen ? (
+          <div className="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-200">
+            <button
+              onClick={() => setIsCheckoutOpen(false)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors mr-2"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <span className="font-medium text-gray-900 text-sm">Trip Summary</span>
+          </div>
+        ) : hasStartedChat ? (
           <div className="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-200">
             <button
               onClick={handleBack}
@@ -153,6 +167,8 @@ export default function ChatPopup() {
           <ChatInterface
             initialMessage={initialMessage}
             onRestart={handleRestart}
+            onCheckoutChange={setIsCheckoutOpen}
+            checkoutOpen={isCheckoutOpen}
           />
         )}
       </div>
