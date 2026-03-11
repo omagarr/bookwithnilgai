@@ -39,12 +39,13 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
     const textarea = document.querySelector('textarea');
     if (!textarea) return;
 
-    const lineHeight = 20;
-    const paddingY = 18;
+    const lineHeight = 24;
+    const paddingY = 20;
+    const minHeight = 80;
 
     textarea.style.height = 'auto';
 
-    let finalHeight = Math.min(Math.max(textarea.scrollHeight, lineHeight * 2 + paddingY), lineHeight * 5 + paddingY);
+    let finalHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), lineHeight * 5 + paddingY);
     textarea.style.height = `${finalHeight}px`;
 
     textarea.scrollTop = textarea.scrollHeight;
@@ -246,11 +247,11 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
                 onFocus={() => {}}
                 onBlur={handleBlur}
                 placeholder={isListening ? "Listening..." : "I'm Jess, your AI travel assistant. Ask me about flights, hotels, transfers, and experiences."}
-                className="w-full pt-3 pb-1.5 px-4 text-base bg-white rounded-xl focus:outline-none focus:ring-0 focus:border-none placeholder:text-gray-400 resize-none overflow-y-auto transition-height duration-200 leading-5 border-none outline-none"
+                className="w-full pt-3 pb-2 px-4 text-sm bg-white rounded-xl focus:outline-none focus:ring-0 focus:border-none placeholder:text-gray-400 resize-none overflow-y-auto transition-height duration-200 leading-relaxed border-none outline-none"
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#E5E7EB transparent',
-                  height: '58px',
+                  minHeight: '90px',
                   WebkitAppearance: 'none',
                   WebkitTapHighlightColor: 'transparent',
                   overflowAnchor: 'auto',
@@ -258,12 +259,6 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
                   position: 'relative',
                   zIndex: 1,
                   touchAction: 'auto',
-                  fontSize: (() => {
-                    const browserWidth = typeof window !== 'undefined' ? window.screen.width : 0;
-                    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
-                    const isDesktopBrowser = browserWidth > 1000 || windowWidth > 600;
-                    return isDesktopBrowser ? '14px' : '16px';
-                  })()
                 }}
               />
             </div>
