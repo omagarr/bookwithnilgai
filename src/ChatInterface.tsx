@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Mic } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Send, Mic, ExternalLink, Globe, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, ScriptStep } from '@/types/chat';
 import scriptedConversation from '@/lib/scriptedConversation';
@@ -50,6 +50,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
   const [expandedFlights, setExpandedFlights] = useState<Set<string>>(
     new Set(savedState?.expandedFlights ?? [])
   );
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
 
@@ -219,8 +220,24 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
   // Handle card selection
   const handleCardSelect = useCallback(
-    (cardId: string) => {
-      setSelectedCards((prev) => new Set(prev).add(cardId));
+    (cardId: string, siblingIds?: string[]) => {
+      // Check if this is a re-selection (switching within same group)
+      const isReselection = siblingIds?.some((id) => selectedCards.has(id)) ?? false;
+
+      setSelectedCards((prev) => {
+        const next = new Set(prev);
+        // If siblings provided, deselect them first (single-select within group)
+        if (siblingIds) {
+          for (const id of siblingIds) {
+            next.delete(id);
+          }
+        }
+        next.add(cardId);
+        return next;
+      });
+
+      // Don't advance if just switching selection within a group
+      if (isReselection) return;
 
       // For experience cards, allow multi-select before advancing
       const lastMsgWithExperiences = [...messages].reverse().find((m) => m.experienceOptions);
@@ -232,7 +249,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
       // For other card types, advance after a short delay
       setTimeout(() => advanceScript(''), 500);
     },
-    [messages, advanceScript]
+    [messages, advanceScript, selectedCards]
   );
 
   // Handle experience multi-select completion (via text input)
@@ -398,7 +415,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                 <FlightOption
                   key={flight.id}
                   data={flight}
-                  onSelect={() => handleCardSelect(flight.id)}
+                  onSelect={() => handleCardSelect(flight.id, msg.flightOptions!.map(f => f.id))}
                   selected={selectedCards.has(flight.id)}
                   animationDelay={i * 150}
                 />
@@ -421,7 +438,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                 <HotelOption
                   key={hotel.id}
                   data={hotel}
-                  onSelect={() => handleCardSelect(hotel.id)}
+                  onSelect={() => handleCardSelect(hotel.id, msg.hotelOptions!.map(h => h.id))}
                   selected={selectedCards.has(hotel.id)}
                   animationDelay={i * 150}
                 />
@@ -436,7 +453,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                 <TransferOption
                   key={transfer.id}
                   data={transfer}
-                  onSelect={() => handleCardSelect(transfer.id)}
+                  onSelect={() => handleCardSelect(transfer.id, msg.transferOptions!.map(t => t.id))}
                   selected={selectedCards.has(transfer.id)}
                   animationDelay={i * 150}
                 />
@@ -495,8 +512,133 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
     );
   };
 
+  // Compute trip total and selected item details
+  const tripTotal = useMemo(() => {
+    let total = 0;
+    let currency = '';
+    const items: { label: string; detail: string; price: number }[] = [];
+
+    for (const msg of messages) {
+      if (msg.flightOptions) {
+        for (const f of msg.flightOptions) {
+          if (selectedCards.has(f.id)) {
+            total += f.price;
+            currency = currency || f.currency;
+            items.push({ label: 'Flight', detail: `${f.airline} · ${f.departureAirport} → ${f.arrivalAirport}`, price: f.price });
+          }
+        }
+      }
+      if (msg.hotelOptions) {
+        for (const h of msg.hotelOptions) {
+          if (selectedCards.has(h.id)) {
+            total += h.totalPrice;
+            currency = currency || h.currency;
+            items.push({ label: 'Hotel', detail: `${h.name} · ${h.nights} nights`, price: h.totalPrice });
+          }
+        }
+      }
+      if (msg.transferOptions) {
+        for (const t of msg.transferOptions) {
+          if (selectedCards.has(t.id)) {
+            total += t.price;
+            currency = currency || t.currency;
+            items.push({ label: 'Transfer', detail: t.vehicleType, price: t.price });
+          }
+        }
+      }
+      if (msg.experienceOptions) {
+        for (const e of msg.experienceOptions) {
+          if (selectedCards.has(e.id)) {
+            total += e.pricePerPerson;
+            currency = currency || e.currency;
+            items.push({ label: 'Experience', detail: e.title, price: e.pricePerPerson });
+          }
+        }
+      }
+    }
+
+    return total > 0 ? { total, currency, items } : null;
+  }, [messages, selectedCards]);
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* Trip total subheader */}
+      {tripTotal && (
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-2 bg-teal-50 border-b border-teal-100 shadow-[0_2px_6px_rgba(255,255,255,0.5)] z-10">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-600">Trip total:</span>
+            <span className="text-sm font-bold text-gray-900">{tripTotal.currency}{tripTotal.total.toLocaleString()}</span>
+          </div>
+          <button
+            onClick={() => setShowCheckout(true)}
+            className="text-[11px] font-bold tracking-wider text-teal-700 hover:text-teal-900 transition-colors"
+          >
+            CHECKOUT
+          </button>
+        </div>
+      )}
+
+      {/* Checkout overlay */}
+      {showCheckout && tripTotal && (
+        <div className="absolute inset-0 z-50 bg-white flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900">Your trip summary</h2>
+            <button onClick={() => setShowCheckout(false)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+
+          {/* Summary items */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+            {tripTotal.items.map((item, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">{item.label}</div>
+                  <div className="text-sm text-gray-800 truncate">{item.detail}</div>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-4">{tripTotal.currency}{item.price}</span>
+              </div>
+            ))}
+
+            {/* Total */}
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+              <span className="text-sm font-semibold text-gray-900">Total</span>
+              <span className="text-lg font-bold text-gray-900">{tripTotal.currency}{tripTotal.total.toLocaleString()}</span>
+            </div>
+
+            {/* Booking link preview */}
+            <div
+              className="border border-gray-200 hover:border-gray-300 rounded-lg p-3 mt-4 cursor-pointer transition-all duration-200 bg-gray-50/50 hover:bg-gray-50 hover:shadow-sm"
+              onClick={() => window.open('https://book.nilgai.travel/checkout/NLG-PAR-2026', '_blank', 'noopener,noreferrer')}
+            >
+              <div className="flex gap-3">
+                <div className="w-14 h-14 flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">✈️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate mb-0.5">
+                        Complete your booking
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-1">
+                        Secure checkout · Instant confirmation · Free cancellation
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <Globe className="w-3 h-3" />
+                        <span className="truncate">book.nilgai.travel</span>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div
         ref={messagesContainerRef}

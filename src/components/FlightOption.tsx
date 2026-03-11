@@ -133,7 +133,7 @@ export default function FlightOption({ data, onSelect, selected, animationDelay 
 
       {/* Stop city */}
       {data.stops > 0 && data.stopCity && (
-        <div className="text-center -mt-2">
+        <div className="text-center -mt-3 -mb-1">
           <span className="text-[11px] text-gray-500">via {data.stopCity}</span>
         </div>
       )}
