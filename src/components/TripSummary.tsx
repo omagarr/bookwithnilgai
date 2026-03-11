@@ -35,7 +35,7 @@ function SummaryRow({ icon, label, details, price, currency }: {
 export default function TripSummary({ data, onBook, animationDelay = 0 }: TripSummaryProps) {
   return (
     <div
-      className="travel-card-enter bg-white rounded-2xl p-5 my-2 max-w-[420px] w-full shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+      className="travel-card-enter bg-white rounded-2xl p-5 w-full shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       <h3 className="text-base font-bold text-nilgai-blue mb-1">Trip Summary</h3>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Mic } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, ScriptStep } from '@/types/chat';
 import scriptedConversation from '@/lib/scriptedConversation';
@@ -13,6 +13,7 @@ import TripSummary from '@/components/TripSummary';
 import BookingConfirmation from '@/components/BookingConfirmation';
 import BookingProcessing from '@/components/BookingProcessing';
 import BookingComplete from '@/components/BookingComplete';
+import { useBrowserSpeech } from '@/lib/useBrowserSpeech';
 import '@/styles/TravelCards.css';
 
 interface ChatInterfaceProps {
@@ -28,16 +29,26 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
   const [isDemoComplete, setIsDemoComplete] = useState(false);
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [waitingForCardSelect, setWaitingForCardSelect] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+  const [silenceTimeout, setSilenceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [speechOverlayText, setSpeechOverlayText] = useState('');
+  const [speechBaseText, setSpeechBaseText] = useState('');
+
+  const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Scroll to bottom
+  // Scroll to bottom (with flex-col-reverse, scrollTop=0 is the visual bottom)
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+      }
     }, 50);
   }, []);
 
@@ -97,12 +108,8 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
           await new Promise((r) => setTimeout(r, scriptedMsg.delay));
         }
 
-        // Determine if this message has rich content
+        // Determine if this message has rich content (non-card types)
         const richContent: Partial<Message> = {};
-        if (scriptedMsg.flightOptions) richContent.flightOptions = scriptedMsg.flightOptions;
-        if (scriptedMsg.hotelOptions) richContent.hotelOptions = scriptedMsg.hotelOptions;
-        if (scriptedMsg.transferOptions) richContent.transferOptions = scriptedMsg.transferOptions;
-        if (scriptedMsg.experienceOptions) richContent.experienceOptions = scriptedMsg.experienceOptions;
         if (scriptedMsg.tripSummary) richContent.tripSummary = scriptedMsg.tripSummary;
         if (scriptedMsg.bookingConfirmation) richContent.bookingConfirmation = scriptedMsg.bookingConfirmation;
         if (scriptedMsg.bookingProcessing) richContent.bookingProcessing = scriptedMsg.bookingProcessing;
@@ -116,7 +123,26 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
         // Stream the text content character-by-character
         if (scriptedMsg.content) {
+          setIsLoading(false);
           await streamText(scriptedMsg.content, msgId);
+        }
+
+        // Add card options one by one with staggered delays (matching B2B pattern)
+        const cardArrays: { key: string; items: any[] }[] = [];
+        if (scriptedMsg.flightOptions) cardArrays.push({ key: 'flightOptions', items: scriptedMsg.flightOptions });
+        if (scriptedMsg.hotelOptions) cardArrays.push({ key: 'hotelOptions', items: scriptedMsg.hotelOptions });
+        if (scriptedMsg.transferOptions) cardArrays.push({ key: 'transferOptions', items: scriptedMsg.transferOptions });
+        if (scriptedMsg.experienceOptions) cardArrays.push({ key: 'experienceOptions', items: scriptedMsg.experienceOptions });
+
+        for (const { key, items } of cardArrays) {
+          for (const item of items) {
+            await new Promise((r) => setTimeout(r, 300));
+            addMessage({
+              role: 'assistant',
+              content: '',
+              [key]: [item],
+            });
+          }
         }
       }
 
@@ -223,6 +249,90 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
     [isLoading, isDemoComplete, advanceScript, messages, selectedCards, handleExperiencesDone]
   );
 
+  // Speech recognition setup
+  useEffect(() => {
+    if (browserRecognition && browserSupported) {
+      const rec = browserRecognition;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onresult = (event: any) => {
+        if (silenceTimeout) clearTimeout(silenceTimeout);
+
+        let interim = '';
+        let finalText = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalText = result[0].transcript.trim();
+            const updatedFinal = speechBaseText ? `${speechBaseText} ${finalText}` : finalText;
+            setSpeechBaseText(updatedFinal);
+            setMessage(updatedFinal);
+            setSpeechOverlayText('');
+          } else {
+            interim += result[0].transcript.trim() + ' ';
+          }
+        }
+
+        if (interim.trim() && !finalText) {
+          const combinedText = speechBaseText ? `${speechBaseText} ${interim.trim()}` : interim.trim();
+          setMessage(combinedText);
+          setSpeechOverlayText(interim.trim());
+        }
+
+        if (event.results[event.resultIndex]?.isFinal) {
+          const timeout = setTimeout(() => {
+            rec.stop();
+            setIsListening(false);
+          }, 3000);
+          setSilenceTimeout(timeout);
+        }
+      };
+
+      rec.onerror = () => {
+        setIsListening(false);
+        setSpeechOverlayText('');
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+        setSpeechOverlayText('');
+        if (silenceTimeout) clearTimeout(silenceTimeout);
+      };
+
+      setRecognition(rec);
+      setIsSpeechSupported(true);
+    }
+
+    return () => {
+      if (silenceTimeout) clearTimeout(silenceTimeout);
+    };
+  }, [silenceTimeout, browserRecognition, browserSupported, speechBaseText]);
+
+  const handleMicClick = useCallback(async () => {
+    if (!isSpeechSupported || !recognition) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+
+      if (isListening) {
+        recognition.stop();
+        setIsListening(false);
+        setSpeechOverlayText('');
+      } else {
+        setSpeechOverlayText('');
+        setSpeechBaseText(message);
+        recognition.start();
+        setIsListening(true);
+      }
+    } catch {
+      alert('Please allow microphone access to use speech input.');
+    }
+  }, [isSpeechSupported, recognition, isListening, message]);
+
   // Initialize with first message
   useEffect(() => {
     if (!hasInitialized.current && initialMessage) {
@@ -234,10 +344,13 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
   // Render a single message
   const renderMessage = (msg: Message) => {
     const isUser = msg.role === 'user';
+    const hasCards = msg.flightOptions || msg.hotelOptions || msg.transferOptions
+      || msg.experienceOptions || msg.tripSummary || msg.bookingConfirmation
+      || msg.bookingProcessing || msg.bookingComplete;
 
     return (
-      <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-        <div className={`max-w-[85%] ${isUser ? '' : ''}`}>
+      <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
+        <div className={hasCards ? 'w-[90%]' : 'max-w-[90%]'}>
           {/* Text content */}
           {msg.content && (
             <div
@@ -253,7 +366,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Flight options */}
           {msg.flightOptions && (
-            <div className="mt-2 space-y-0">
+            <div>
               {msg.flightOptions.map((flight, i) => (
                 <FlightOption
                   key={flight.id}
@@ -268,7 +381,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Hotel options */}
           {msg.hotelOptions && (
-            <div className="mt-2 space-y-0">
+            <div>
               {msg.hotelOptions.map((hotel, i) => (
                 <HotelOption
                   key={hotel.id}
@@ -283,7 +396,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Transfer options */}
           {msg.transferOptions && (
-            <div className="mt-2 space-y-0">
+            <div>
               {msg.transferOptions.map((transfer, i) => (
                 <TransferOption
                   key={transfer.id}
@@ -298,7 +411,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Experience options */}
           {msg.experienceOptions && (
-            <div className="mt-2 space-y-0">
+            <div>
               {msg.experienceOptions.map((exp, i) => (
                 <ExperienceOption
                   key={exp.id}
@@ -313,14 +426,14 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Trip summary */}
           {msg.tripSummary && (
-            <div className="mt-2">
+            <div>
               <TripSummary data={msg.tripSummary} onBook={handleBookTrip} />
             </div>
           )}
 
           {/* Booking confirmation */}
           {msg.bookingConfirmation && (
-            <div className="mt-2">
+            <div>
               <BookingConfirmation
                 data={msg.bookingConfirmation}
                 onConfirm={handleBookingConfirm}
@@ -331,14 +444,14 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Booking processing */}
           {msg.bookingProcessing && (
-            <div className="mt-2">
+            <div>
               <BookingProcessing />
             </div>
           )}
 
           {/* Booking complete */}
           {msg.bookingComplete && (
-            <div className="mt-2">
+            <div>
               <BookingComplete data={msg.bookingComplete} />
             </div>
           )}
@@ -352,11 +465,9 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white"
+        className="flex-1 overflow-y-auto px-6 pt-4 pb-2 flex flex-col-reverse"
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}
       >
-        {messages.map(renderMessage)}
-
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex justify-start mb-3">
@@ -370,11 +481,13 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
           </div>
         )}
 
+        {[...messages].reverse().map(renderMessage)}
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
-      <div className="flex-shrink-0 px-4 py-3 bg-white">
+      <div className="flex-shrink-0 w-full mt-0 mb-4 bg-white">
         {isDemoComplete ? (
           <button
             onClick={onRestart}
@@ -384,34 +497,76 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
             Restart Demo
           </button>
         ) : (
-          <div className="rounded-xl border border-gray-200 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+          <div className="rounded-xl border border-gray-200 shadow-[0_0_10px_rgba(0,0,0,0.05)] mx-4">
             <textarea
               ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                const newText = e.target.value;
+                setMessage(newText);
+                if (!newText) {
+                  setSpeechBaseText('');
+                  setSpeechOverlayText('');
+                } else {
+                  setSpeechBaseText(newText);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage(message);
                 }
               }}
-              placeholder={isLoading ? 'Thinking...' : 'Ask a follow up...'}
+              placeholder={isListening ? 'Listening...' : isLoading ? 'Thinking...' : 'Ask a follow up...'}
               disabled={isLoading}
               rows={2}
-              className="w-full pt-3 pb-1.5 px-4 text-sm bg-white rounded-t-xl text-gray-800
+              className="w-full pt-3 pb-1.5 px-4 bg-white rounded-t-xl text-gray-800
                          focus:outline-none focus:ring-0 placeholder:text-gray-400 resize-none
                          disabled:opacity-50"
               style={{ fontSize: '16px' }}
             />
             <div className="flex items-center justify-end gap-1 pt-1 pb-2 px-3 bg-white rounded-b-xl min-h-[36px]">
-              <button
-                onClick={() => handleSendMessage(message)}
-                disabled={isLoading}
-                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors
-                           disabled:opacity-50"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+              {isListening ? (
+                <div className="flex items-center gap-2 h-[32px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-gray-500">
+                      {speechOverlayText ? 'Processing...' : 'Listening...'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMicClick}
+                    className="p-1.5 rounded-lg text-[#161616] hover:bg-gray-100 transition-colors"
+                    title="Click to stop recording"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-[#161616] flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-sm"></div>
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {isSpeechSupported && (
+                    <button
+                      type="button"
+                      onClick={handleMicClick}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                      title="Click to start voice input"
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleSendMessage(message)}
+                    disabled={isLoading}
+                    className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors
+                               disabled:opacity-50"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

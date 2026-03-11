@@ -219,7 +219,7 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
   };
 
   return (
-    <div className="flex flex-col h-full px-6 py-10 antialiased relative">
+    <div className="flex flex-col h-full px-6 pt-2 pb-10 antialiased relative">
       <div className="mb-2">
         <div className="flex items-center justify-center mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}

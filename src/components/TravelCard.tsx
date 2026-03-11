@@ -37,7 +37,7 @@ export default function TravelCard({
     <div
       className={`
         travel-card-enter
-        bg-white rounded-2xl p-4 my-2 max-w-[420px] w-full
+        bg-white rounded-2xl p-4 w-full
         shadow-[0_2px_8px_rgba(0,0,0,0.1)]
         transition-all duration-200
         ${selected

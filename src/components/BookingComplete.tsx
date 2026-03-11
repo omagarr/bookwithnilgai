@@ -13,7 +13,7 @@ export default function BookingComplete({ data, animationDelay = 0 }: BookingCom
 
   return (
     <div
-      className="travel-card-enter bg-white rounded-2xl p-5 my-2 max-w-[420px] w-full shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+      className="travel-card-enter bg-white rounded-2xl p-5 w-full shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       {/* Success header */}
