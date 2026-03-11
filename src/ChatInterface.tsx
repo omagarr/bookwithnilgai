@@ -9,6 +9,8 @@ import FlightOption from '@/components/FlightOption';
 import HotelOption from '@/components/HotelOption';
 import TransferOption from '@/components/TransferOption';
 import ExperienceOption from '@/components/ExperienceOption';
+import TravelerCount from '@/components/TravelerCount';
+import TripConfirmation from '@/components/TripConfirmation';
 import TripSummary from '@/components/TripSummary';
 import BookingConfirmation from '@/components/BookingConfirmation';
 import BookingProcessing from '@/components/BookingProcessing';
@@ -155,6 +157,8 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
 
         // Determine if this message has rich content (non-card types)
         const richContent: Partial<Message> = {};
+        if (scriptedMsg.travelerCountOptions) richContent.travelerCountOptions = scriptedMsg.travelerCountOptions;
+        if (scriptedMsg.tripConfirmation) richContent.tripConfirmation = scriptedMsg.tripConfirmation;
         if (scriptedMsg.tripSummary) richContent.tripSummary = scriptedMsg.tripSummary;
         if (scriptedMsg.bookingConfirmation) richContent.bookingConfirmation = scriptedMsg.bookingConfirmation;
         if (scriptedMsg.bookingProcessing) richContent.bookingProcessing = scriptedMsg.bookingProcessing;
@@ -283,6 +287,11 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     });
   }, [addMessage]);
 
+  // Handle experience confirmation "Proceed to Checkout" button
+  const handleExperienceCheckout = useCallback(() => {
+    advanceScript('');
+  }, [advanceScript]);
+
   // Handle trip summary "Book Trip" button
   const handleBookTrip = useCallback(() => {
     advanceScript('');
@@ -399,9 +408,10 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   // Render a single message
   const renderMessage = (msg: Message) => {
     const isUser = msg.role === 'user';
-    const hasCards = msg.flightOptions || msg.hotelOptions || msg.transferOptions
-      || msg.experienceOptions || msg.tripSummary || msg.bookingConfirmation
-      || msg.bookingProcessing || msg.bookingComplete;
+    const hasCards = msg.travelerCountOptions || msg.flightOptions || msg.hotelOptions
+      || msg.transferOptions || msg.experienceOptions || msg.tripConfirmation
+      || msg.tripSummary || msg.bookingConfirmation || msg.bookingProcessing
+      || msg.bookingComplete;
 
     return (
       <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
@@ -488,6 +498,21 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                   animationDelay={i * 150}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Traveler count buttons */}
+          {msg.travelerCountOptions && (
+            <TravelerCount
+              options={msg.travelerCountOptions}
+              onSelect={() => advanceScript('')}
+            />
+          )}
+
+          {/* Trip confirmation */}
+          {msg.tripConfirmation && (
+            <div>
+              <TripConfirmation data={msg.tripConfirmation} onCheckout={handleExperienceCheckout} />
             </div>
           )}
 

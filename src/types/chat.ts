@@ -15,10 +15,12 @@ export interface ScriptedMessage {
   content: string;
   /** Milliseconds before showing this message (cumulative within step) */
   delay: number;
+  travelerCountOptions?: number[];
   flightOptions?: FlightOptionData[];
   hotelOptions?: HotelOptionData[];
   transferOptions?: TransferOptionData[];
   experienceOptions?: ExperienceOptionData[];
+  tripConfirmation?: TripConfirmationData;
   tripSummary?: TripSummaryData;
   bookingConfirmation?: BookingConfirmationData;
   bookingProcessing?: boolean;
@@ -36,10 +38,12 @@ export interface Message {
   timestamp: number;
   isHidden?: boolean;
   // Rich content properties
+  travelerCountOptions?: number[];
   flightOptions?: FlightOptionData[];
   hotelOptions?: HotelOptionData[];
   transferOptions?: TransferOptionData[];
   experienceOptions?: ExperienceOptionData[];
+  tripConfirmation?: TripConfirmationData;
   tripSummary?: TripSummaryData;
   bookingConfirmation?: BookingConfirmationData;
   bookingProcessing?: boolean;
@@ -130,6 +134,15 @@ export interface TripSummaryData {
   }>;
   currency: string;
   totalPrice: number;
+}
+
+export interface TripConfirmationData {
+  selectedExperiences: Array<{
+    label: string;
+    price: number;
+  }>;
+  tripTotal: number;
+  currency: string;
 }
 
 export interface BookingConfirmationData {

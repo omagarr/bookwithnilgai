@@ -1,19 +1,32 @@
 import { ScriptStep } from '@/types/chat';
 
 const scriptedConversation: ScriptStep[] = [
-  // Step 1: Welcome → User initiates trip planning
+  // Step 1: Welcome → Ask how many travelers
   {
     trigger: 'userInput',
-    userMessage: 'I want to plan a weekend trip to Paris for 2 people',
+    userMessage: 'I want to plan a weekend trip to Paris',
     assistantMessages: [
       {
-        content: "Great choice! Paris is wonderful for a weekend getaway. Let me find the best flights for you. When are you thinking of going?",
+        content: "Great choice! Paris is wonderful for a weekend getaway. How many people are travelling?",
+        delay: 1500,
+        travelerCountOptions: [1, 2, 3, 4, 5, 6, 7, 8],
+      },
+    ],
+  },
+
+  // Step 2: Traveler count selected → Ask dates
+  {
+    trigger: 'cardSelect',
+    userMessage: '2 travellers',
+    assistantMessages: [
+      {
+        content: "Perfect, 2 travellers! When are you thinking of going?",
         delay: 1500,
       },
     ],
   },
 
-  // Step 2: Dates → Show flights
+  // Step 3: Dates → Show flights
   {
     trigger: 'userInput',
     userMessage: 'This Friday to Sunday',
@@ -94,7 +107,7 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 3: Flight selected → Show hotels
+  // Step 4: Flight selected → Show hotels
   {
     trigger: 'cardSelect',
     userMessage: "I'll take the Air France direct flight",
@@ -160,7 +173,7 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 4: Hotel selected → Show transfers
+  // Step 5: Hotel selected → Show transfers
   {
     trigger: 'cardSelect',
     userMessage: 'Book the boutique hotel in Le Marais',
@@ -214,7 +227,7 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 5: Transfer selected → Show experiences
+  // Step 6: Transfer selected → Show experiences
   {
     trigger: 'cardSelect',
     userMessage: 'The private sedan looks good',
@@ -280,13 +293,33 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 6: Experiences selected → Trip summary
+  // Step 7: Experiences selected → Trip confirmation with total + checkout
   {
     trigger: 'cardSelect',
     userMessage: 'Add the Eiffel Tower tour and the wine tasting',
     assistantMessages: [
       {
-        content: "Wonderful picks! Here's your complete Paris weekend:",
+        content: "Great choices! Here's what I've added:",
+        delay: 1500,
+        tripConfirmation: {
+          selectedExperiences: [
+            { label: 'Eiffel Tower Skip-the-Line × 2', price: 90 },
+            { label: 'Wine & Cheese Tasting × 2', price: 130 },
+          ],
+          tripTotal: 1023,
+          currency: '£',
+        },
+      },
+    ],
+  },
+
+  // Step 8: Checkout → Trip summary
+  {
+    trigger: 'cardSelect',
+    userMessage: 'Proceed to checkout',
+    assistantMessages: [
+      {
+        content: "Here's your complete Paris weekend:",
         delay: 1500,
         tripSummary: {
           flight: {
@@ -315,7 +348,7 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 7: Booking confirmation flow
+  // Step 9: Booking confirmation flow
   {
     trigger: 'cardSelect',
     userMessage: "Let's book it!",
@@ -352,7 +385,7 @@ const scriptedConversation: ScriptStep[] = [
     ],
   },
 
-  // Step 8: Booking complete (triggered by clicking Confirm on booking)
+  // Step 10: Booking complete (triggered by clicking Confirm on booking)
   {
     trigger: 'cardSelect',
     userMessage: 'Confirmed!',
