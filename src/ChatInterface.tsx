@@ -221,9 +221,6 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
   // Handle card selection
   const handleCardSelect = useCallback(
     (cardId: string, siblingIds?: string[]) => {
-      // Check if this is a re-selection (switching within same group)
-      const isReselection = siblingIds?.some((id) => selectedCards.has(id)) ?? false;
-
       setSelectedCards((prev) => {
         const next = new Set(prev);
         // If siblings provided, deselect them first (single-select within group)
@@ -235,21 +232,20 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
         next.add(cardId);
         return next;
       });
-
-      // Don't advance if just switching selection within a group
-      if (isReselection) return;
-
-      // For experience cards, allow multi-select before advancing
-      const lastMsgWithExperiences = [...messages].reverse().find((m) => m.experienceOptions);
-      if (lastMsgWithExperiences?.experienceOptions) {
-        // Don't auto-advance for experiences — wait for user to type or click more
-        return;
-      }
-
-      // For other card types, advance after a short delay
-      setTimeout(() => advanceScript(''), 500);
     },
-    [messages, advanceScript, selectedCards]
+    []
+  );
+
+  // Handle card deselection
+  const handleCardDeselect = useCallback(
+    (cardId: string) => {
+      setSelectedCards((prev) => {
+        const next = new Set(prev);
+        next.delete(cardId);
+        return next;
+      });
+    },
+    []
   );
 
   // Handle experience multi-select completion (via text input)
@@ -416,6 +412,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                   key={flight.id}
                   data={flight}
                   onSelect={() => handleCardSelect(flight.id, msg.flightOptions!.map(f => f.id))}
+                  onDeselect={() => handleCardDeselect(flight.id)}
                   selected={selectedCards.has(flight.id)}
                   animationDelay={i * 150}
                 />
@@ -439,6 +436,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                   key={hotel.id}
                   data={hotel}
                   onSelect={() => handleCardSelect(hotel.id, msg.hotelOptions!.map(h => h.id))}
+                  onDeselect={() => handleCardDeselect(hotel.id)}
                   selected={selectedCards.has(hotel.id)}
                   animationDelay={i * 150}
                 />
@@ -454,6 +452,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                   key={transfer.id}
                   data={transfer}
                   onSelect={() => handleCardSelect(transfer.id, msg.transferOptions!.map(t => t.id))}
+                  onDeselect={() => handleCardDeselect(transfer.id)}
                   selected={selectedCards.has(transfer.id)}
                   animationDelay={i * 150}
                 />
@@ -469,6 +468,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                   key={exp.id}
                   data={exp}
                   onSelect={() => handleCardSelect(exp.id)}
+                  onDeselect={() => handleCardDeselect(exp.id)}
                   selected={selectedCards.has(exp.id)}
                   animationDelay={i * 150}
                 />

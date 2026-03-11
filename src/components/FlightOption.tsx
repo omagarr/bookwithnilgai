@@ -55,11 +55,12 @@ const badgeColors: Record<string, string> = {
 interface FlightOptionProps {
   data: FlightOptionData;
   onSelect: () => void;
+  onDeselect?: () => void;
   selected?: boolean;
   animationDelay?: number;
 }
 
-export default function FlightOption({ data, onSelect, selected, animationDelay }: FlightOptionProps) {
+export default function FlightOption({ data, onSelect, onDeselect, selected, animationDelay }: FlightOptionProps) {
   const stopsBadge = data.stops === 0
     ? { text: 'Direct', variant: 'green' as const }
     : { text: `${data.stops} Stop${data.stops > 1 ? 's' : ''}`, variant: 'orange' as const };
@@ -72,6 +73,7 @@ export default function FlightOption({ data, onSelect, selected, animationDelay 
       priceSubtext="/ person"
       buttonLabel="Select"
       onSelect={onSelect}
+      onDeselect={onDeselect}
       selected={selected}
       animationDelay={animationDelay}
     >

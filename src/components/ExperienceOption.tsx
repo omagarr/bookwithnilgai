@@ -9,21 +9,24 @@ import { ExperienceOptionData } from '@/types/chat';
 interface ExperienceOptionProps {
   data: ExperienceOptionData;
   onSelect: () => void;
+  onDeselect?: () => void;
   selected?: boolean;
   animationDelay?: number;
 }
 
-export default function ExperienceOption({ data, onSelect, selected, animationDelay }: ExperienceOptionProps) {
+export default function ExperienceOption({ data, onSelect, onDeselect, selected, animationDelay }: ExperienceOptionProps) {
   return (
     <TravelCard
       price={`${data.currency}${data.pricePerPerson}`}
       priceSubtext={`/ person · ${data.currency}${data.totalPrice} total`}
       buttonLabel="Add"
+      selectedLabel="Added"
       onSelect={onSelect}
+      onDeselect={onDeselect}
       selected={selected}
       animationDelay={animationDelay}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-center">
         {/* Experience image with duration overlay */}
         <div className="w-[100px] h-[72px] rounded-lg overflow-hidden bg-white flex-shrink-0 relative">
           <Image

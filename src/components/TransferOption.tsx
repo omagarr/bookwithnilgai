@@ -9,6 +9,7 @@ import CarDoorIcon from './icons/CarDoorIcon';
 interface TransferOptionProps {
   data: TransferOptionData;
   onSelect: () => void;
+  onDeselect?: () => void;
   selected?: boolean;
   animationDelay?: number;
 }
@@ -26,7 +27,7 @@ const fuelTypeColors: Record<string, string> = {
   cng: 'bg-sky-100 text-sky-700',
 };
 
-export default function TransferOption({ data, onSelect, selected, animationDelay }: TransferOptionProps) {
+export default function TransferOption({ data, onSelect, onDeselect, selected, animationDelay }: TransferOptionProps) {
   const badge = data.badge
     ? { text: data.badge.text, variant: badgeTypeMap[data.badge.type] || ('gray' as const) }
     : undefined;
@@ -38,6 +39,7 @@ export default function TransferOption({ data, onSelect, selected, animationDela
       priceSubtext="total"
       buttonLabel="Select"
       onSelect={onSelect}
+      onDeselect={onDeselect}
       selected={selected}
       animationDelay={animationDelay}
     >

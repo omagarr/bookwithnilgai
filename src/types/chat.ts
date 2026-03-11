@@ -69,6 +69,7 @@ export interface HotelOptionData {
   name: string;
   image: string;
   stars: number;
+  reviewCount?: number;
   location: string;
   amenities: string[];
   pricePerNight: number;

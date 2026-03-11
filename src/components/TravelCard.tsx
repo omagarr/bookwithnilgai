@@ -10,7 +10,9 @@ interface TravelCardProps {
   price: string;
   priceSubtext?: string;
   buttonLabel: string;
+  selectedLabel?: string;
   onSelect: () => void;
+  onDeselect?: () => void;
   selected?: boolean;
   animationDelay?: number;
   children: React.ReactNode;
@@ -28,7 +30,9 @@ export default function TravelCard({
   price,
   priceSubtext,
   buttonLabel,
+  selectedLabel = 'Selected',
   onSelect,
+  onDeselect,
   selected = false,
   animationDelay = 0,
   children,
@@ -39,13 +43,9 @@ export default function TravelCard({
         travel-card-enter
         bg-gray-100 rounded-2xl p-3 w-full
         transition-all duration-200
-        ${selected
-          ? 'ring-1 ring-nilgai-blue opacity-80 pointer-events-none'
-          : 'hover:-translate-y-0.5 hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
-        }
+        ${selected ? 'bg-blue-50' : ''}
       `}
       style={{ animationDelay: `${animationDelay}ms` }}
-      onClick={!selected ? onSelect : undefined}
     >
       {/* Badge */}
       {badge && (
@@ -68,12 +68,19 @@ export default function TravelCard({
           )}
         </div>
         {selected ? (
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-200 text-teal-800 text-sm font-semibold rounded-lg">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeselect?.();
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-200 text-teal-800 text-sm font-semibold rounded-lg
+                       hover:bg-teal-300 transition-colors duration-200 cursor-pointer"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
-            Selected
-          </div>
+            {selectedLabel}
+          </button>
         ) : (
           <button
             onClick={(e) => {
