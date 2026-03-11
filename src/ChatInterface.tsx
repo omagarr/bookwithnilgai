@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Send, Mic, ExternalLink, Globe } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, ScriptStep } from '@/types/chat';
-import scriptedConversation from '@/lib/scriptedConversation';
+import { Message, ScriptStep, FlightOptionData, HotelOptionData, TransferOptionData, ExperienceOptionData } from '@/types/chat';
+import { getScriptedConversation, ConversationState } from '@/lib/scriptedConversation';
 import FlightOption from '@/components/FlightOption';
 import HotelOption from '@/components/HotelOption';
 import TransferOption from '@/components/TransferOption';
@@ -55,6 +55,63 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     new Set(savedState?.expandedFlights ?? [])
   );
   const [showCheckout, setShowCheckout] = useState(false);
+  const [travelerCount, setTravelerCount] = useState<number>(savedState?.travelerCount ?? 2);
+
+  // Refs to access latest state inside callbacks without stale closures
+  const travelerCountRef = useRef(travelerCount);
+  const messagesRef = useRef(messages);
+  const selectedCardsRef = useRef(selectedCards);
+
+  useEffect(() => { travelerCountRef.current = travelerCount; }, [travelerCount]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { selectedCardsRef.current = selectedCards; }, [selectedCards]);
+
+  // Derive selected items from messages + selectedCards (reads from refs for use in callbacks)
+  const getSelectedItems = useCallback(() => {
+    const msgs = messagesRef.current;
+    const cards = selectedCardsRef.current;
+    let flight: FlightOptionData | null = null;
+    let hotel: HotelOptionData | null = null;
+    let transfer: TransferOptionData | null = null;
+    const experiences: ExperienceOptionData[] = [];
+
+    for (const msg of msgs) {
+      if (msg.flightOptions) {
+        for (const f of msg.flightOptions) {
+          if (cards.has(f.id)) flight = f;
+        }
+      }
+      if (msg.hotelOptions) {
+        for (const h of msg.hotelOptions) {
+          if (cards.has(h.id)) hotel = h;
+        }
+      }
+      if (msg.transferOptions) {
+        for (const t of msg.transferOptions) {
+          if (cards.has(t.id)) transfer = t;
+        }
+      }
+      if (msg.experienceOptions) {
+        for (const e of msg.experienceOptions) {
+          if (cards.has(e.id)) experiences.push(e);
+        }
+      }
+    }
+
+    return { flight, hotel, transfer, experiences };
+  }, []);
+
+  // Build conversation state for dynamic script generation
+  const getConversationState = useCallback((): ConversationState => {
+    const items = getSelectedItems();
+    return {
+      travelerCount: travelerCountRef.current,
+      selectedFlight: items.flight,
+      selectedHotel: items.hotel,
+      selectedTransfer: items.transfer,
+      selectedExperiences: items.experiences,
+    };
+  }, [getSelectedItems]);
 
   // Notify parent when checkout visibility changes
   const toggleCheckout = useCallback((open: boolean) => {
@@ -86,9 +143,10 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         selectedCards: Array.from(selectedCards),
         waitingForCardSelect,
         expandedFlights: Array.from(expandedFlights),
+        travelerCount,
       }));
     } catch { /* ignore quota errors */ }
-  }, [messages, currentStep, isDemoComplete, selectedCards, waitingForCardSelect, expandedFlights]);
+  }, [messages, currentStep, isDemoComplete, selectedCards, waitingForCardSelect, expandedFlights, travelerCount]);
 
   // Scroll to bottom (with flex-col-reverse, scrollTop=0 is the visual bottom)
   const scrollToBottom = useCallback(() => {
@@ -201,7 +259,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   // Advance to next step
   const advanceScript = useCallback(
     async (userText: string) => {
-      if (currentStep >= scriptedConversation.length) {
+      const script = getScriptedConversation(getConversationState());
+
+      if (currentStep >= script.length) {
         setIsDemoComplete(true);
         addMessage({
           role: 'assistant',
@@ -211,7 +271,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         return;
       }
 
-      const step = scriptedConversation[currentStep];
+      const step = script[currentStep];
 
       // Add the scripted user message
       addMessage({
@@ -227,14 +287,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       await playStep(step);
 
       // Check if the NEXT step requires card selection
-      const nextStep = scriptedConversation[nextStepIndex];
+      const nextStep = script[nextStepIndex];
       if (nextStep && nextStep.trigger === 'cardSelect') {
         setWaitingForCardSelect(true);
       } else {
         setWaitingForCardSelect(false);
       }
     },
-    [currentStep, addMessage, playStep]
+    [currentStep, addMessage, playStep, getConversationState]
   );
 
   // Handle card selection
@@ -267,6 +327,13 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     []
   );
 
+  // Handle traveler count selection
+  const handleTravelerSelect = useCallback((count: number) => {
+    travelerCountRef.current = count;
+    setTravelerCount(count);
+    advanceScript('');
+  }, [advanceScript]);
+
   // Handle experience multi-select completion (via text input)
   const handleExperiencesDone = useCallback(() => {
     advanceScript('');
@@ -287,8 +354,8 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     });
   }, [addMessage]);
 
-  // Handle experience confirmation "Proceed to Checkout" button
-  const handleExperienceCheckout = useCallback(() => {
+  // Handle trip confirmation "Proceed to Checkout" button
+  const handleTripConfirmationCheckout = useCallback(() => {
     advanceScript('');
   }, [advanceScript]);
 
@@ -505,14 +572,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
           {msg.travelerCountOptions && (
             <TravelerCount
               options={msg.travelerCountOptions}
-              onSelect={() => advanceScript('')}
+              onSelect={handleTravelerSelect}
             />
           )}
 
           {/* Trip confirmation */}
           {msg.tripConfirmation && (
             <div>
-              <TripConfirmation data={msg.tripConfirmation} onCheckout={handleExperienceCheckout} />
+              <TripConfirmation data={msg.tripConfirmation} onCheckout={handleTripConfirmationCheckout} />
             </div>
           )}
 
@@ -552,7 +619,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     );
   };
 
-  // Compute trip total and selected item details
+  // Compute trip total and selected item details (for header bar + checkout overlay)
   const tripTotal = useMemo(() => {
     let total = 0;
     let currency = '';
@@ -562,9 +629,10 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       if (msg.flightOptions) {
         for (const f of msg.flightOptions) {
           if (selectedCards.has(f.id)) {
-            total += f.price;
+            const price = f.price * travelerCount;
+            total += price;
             currency = currency || f.currency;
-            items.push({ label: 'Flight', detail: `${f.airline} · ${f.departureAirport} → ${f.arrivalAirport}`, price: f.price });
+            items.push({ label: 'Flight', detail: `${f.airline} · ${f.departureAirport} → ${f.arrivalAirport} × ${travelerCount}`, price });
           }
         }
       }
@@ -589,16 +657,17 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       if (msg.experienceOptions) {
         for (const e of msg.experienceOptions) {
           if (selectedCards.has(e.id)) {
-            total += e.pricePerPerson;
+            const price = e.pricePerPerson * travelerCount;
+            total += price;
             currency = currency || e.currency;
-            items.push({ label: 'Experience', detail: e.title, price: e.pricePerPerson });
+            items.push({ label: 'Experience', detail: `${e.title} × ${travelerCount}`, price });
           }
         }
       }
     }
 
     return total > 0 ? { total, currency, items } : null;
-  }, [messages, selectedCards]);
+  }, [messages, selectedCards, travelerCount]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
