@@ -10,7 +10,7 @@ env:
   GAR_REPOSITORY: nilgai-docker
   IMAGE_NAME: book-nilgai
   CLOUD_RUN_SERVICE: book-nilgai
-  CLOUD_RUN_REGION: us-central1
+  CLOUD_RUN_REGION: europe-west2
 
 jobs:
   deploy:
