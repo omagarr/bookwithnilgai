@@ -35,6 +35,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
   const [silenceTimeout, setSilenceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [speechOverlayText, setSpeechOverlayText] = useState('');
   const [speechBaseText, setSpeechBaseText] = useState('');
+  const [expandedFlights, setExpandedFlights] = useState<Set<string>>(new Set());
 
   const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
 
@@ -135,14 +136,12 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
         if (scriptedMsg.experienceOptions) cardArrays.push({ key: 'experienceOptions', items: scriptedMsg.experienceOptions });
 
         for (const { key, items } of cardArrays) {
-          for (const item of items) {
-            await new Promise((r) => setTimeout(r, 300));
-            addMessage({
-              role: 'assistant',
-              content: '',
-              [key]: [item],
-            });
-          }
+          await new Promise((r) => setTimeout(r, 300));
+          addMessage({
+            role: 'assistant',
+            content: '',
+            [key]: items,
+          });
         }
       }
 
@@ -366,8 +365,8 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Flight options */}
           {msg.flightOptions && (
-            <div>
-              {msg.flightOptions.map((flight, i) => (
+            <div className="space-y-2 mt-2">
+              {(expandedFlights.has(msg.id) ? msg.flightOptions : msg.flightOptions.slice(0, 3)).map((flight, i) => (
                 <FlightOption
                   key={flight.id}
                   data={flight}
@@ -376,12 +375,20 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
                   animationDelay={i * 150}
                 />
               ))}
+              {msg.flightOptions.length > 3 && !expandedFlights.has(msg.id) && (
+                <button
+                  onClick={() => setExpandedFlights(prev => new Set(prev).add(msg.id))}
+                  className="w-full py-2 text-sm font-medium text-[#0e3b43] bg-[#0e3b43]/10 rounded-xl hover:bg-[#0e3b43]/20 transition-colors"
+                >
+                  Show more options
+                </button>
+              )}
             </div>
           )}
 
           {/* Hotel options */}
           {msg.hotelOptions && (
-            <div>
+            <div className="space-y-2 mt-2">
               {msg.hotelOptions.map((hotel, i) => (
                 <HotelOption
                   key={hotel.id}
@@ -396,7 +403,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Transfer options */}
           {msg.transferOptions && (
-            <div>
+            <div className="space-y-2 mt-2">
               {msg.transferOptions.map((transfer, i) => (
                 <TransferOption
                   key={transfer.id}
@@ -411,7 +418,7 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
 
           {/* Experience options */}
           {msg.experienceOptions && (
-            <div>
+            <div className="space-y-2 mt-2">
               {msg.experienceOptions.map((exp, i) => (
                 <ExperienceOption
                   key={exp.id}

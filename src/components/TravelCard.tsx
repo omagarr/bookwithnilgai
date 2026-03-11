@@ -37,12 +37,11 @@ export default function TravelCard({
     <div
       className={`
         travel-card-enter
-        bg-white rounded-2xl p-4 w-full
-        shadow-[0_2px_8px_rgba(0,0,0,0.1)]
+        bg-gray-100 rounded-2xl p-3 w-full
         transition-all duration-200
         ${selected
           ? 'ring-2 ring-nilgai-blue opacity-80 pointer-events-none'
-          : 'hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] cursor-pointer'
+          : 'hover:-translate-y-0.5 hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
         }
       `}
       style={{ animationDelay: `${animationDelay}ms` }}
@@ -61,9 +60,9 @@ export default function TravelCard({
       {children}
 
       {/* Price + Button */}
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+      <div className="flex items-center justify-between mt-2 pt-2">
         <div>
-          <span className="text-xl font-bold text-nilgai-blue">{price}</span>
+          <span className="text-lg font-bold text-nilgai-blue">{price}</span>
           {priceSubtext && (
             <span className="text-xs text-gray-500 ml-1">{priceSubtext}</span>
           )}
@@ -81,9 +80,9 @@ export default function TravelCard({
               e.stopPropagation();
               onSelect();
             }}
-            className="px-4 py-2 bg-nilgai-orange text-white text-sm font-semibold rounded-lg
+            className="px-3.5 py-1.5 bg-[#0e3b43] text-white text-sm font-semibold rounded-lg
                        hover:-translate-y-px hover:shadow-md transition-all duration-200
-                       active:translate-y-0 min-h-[44px]"
+                       active:translate-y-0"
           >
             {buttonLabel}
           </button>
