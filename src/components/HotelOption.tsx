@@ -59,7 +59,7 @@ export default function HotelOption({ data, onSelect, selected, animationDelay }
     >
       <div className="flex gap-3">
         {/* Hotel image */}
-        <div className="w-[100px] h-[72px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative">
+        <div className="w-[100px] h-[72px] rounded-lg overflow-hidden bg-white flex-shrink-0 relative">
           <Image
             src={data.image}
             alt={data.name}

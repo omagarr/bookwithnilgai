@@ -84,6 +84,8 @@ export interface TransferOptionData {
   duration: string;
   capacity: number;
   luggage: number;
+  doors: number;
+  fuelType?: string;
   price: number;
   currency: string;
   badge?: {
