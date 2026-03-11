@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Send } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, Mic } from 'lucide-react';
+import BadgesSection from './BadgesSection';
+import { useBrowserSpeech } from './lib/useBrowserSpeech';
 
 interface WelcomeSectionProps {
   onStartChat: (message: string) => void;
@@ -16,11 +18,193 @@ const suggestions = [
 
 export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
   const [message, setMessage] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [silenceTimeout, setSilenceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [, setFinalTranscript] = useState('');
+
+  // Add state for better speech UX
+  const [speechOverlayText, setSpeechOverlayText] = useState('');
+  const [speechBaseText, setSpeechBaseText] = useState('');
+
+  // Use browser speech service
+  const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [message]);
+
+  const adjustTextareaHeight = () => {
+    const textarea = document.querySelector('textarea');
+    if (!textarea) return;
+
+    const lineHeight = 20;
+    const paddingY = 18;
+
+    textarea.style.height = 'auto';
+
+    let finalHeight = Math.min(Math.max(textarea.scrollHeight, lineHeight * 2 + paddingY), lineHeight * 5 + paddingY);
+    textarea.style.height = `${finalHeight}px`;
+
+    textarea.scrollTop = textarea.scrollHeight;
+  };
+
+  const toSentenceCase = (text: string) => {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = toSentenceCase(e.target.value);
+    setMessage(newText);
+    if (!newText) {
+      setFinalTranscript('');
+      setSpeechBaseText('');
+      setSpeechOverlayText('');
+    } else {
+      setSpeechBaseText(newText);
+      setFinalTranscript(newText);
+    }
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      if (window.visualViewport) {
+        window.scrollTo(0, 0);
+      }
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0');
+      }
+    }, 300);
+  };
+
+  useEffect(() => {
+    if (browserRecognition && browserSupported) {
+      const rec = browserRecognition;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onresult = (event: any) => {
+        if (silenceTimeout) {
+          clearTimeout(silenceTimeout);
+        }
+
+        let interim = '';
+        let finalText = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalText = result[0].transcript.trim();
+            const updatedFinal = speechBaseText ? `${speechBaseText} ${finalText}` : finalText;
+            setFinalTranscript(updatedFinal);
+            setSpeechBaseText(updatedFinal);
+            setMessage(toSentenceCase(updatedFinal));
+            setSpeechOverlayText('');
+          } else {
+            interim += result[0].transcript.trim() + ' ';
+          }
+        }
+
+        if (interim.trim() && !finalText) {
+          const combinedText = speechBaseText ? `${speechBaseText} ${interim.trim()}` : interim.trim();
+          setMessage(toSentenceCase(combinedText));
+          setSpeechOverlayText(interim.trim());
+        }
+
+        setTimeout(() => {
+          const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+          if (textarea) {
+            textarea.scrollTop = textarea.scrollHeight;
+          }
+        }, 0);
+
+        if (event.results[event.resultIndex] && event.results[event.resultIndex].isFinal) {
+          const timeout = setTimeout(() => {
+            if (rec) {
+              rec.stop();
+              setIsListening(false);
+            }
+          }, 3000);
+          setSilenceTimeout(timeout);
+        }
+      };
+
+      rec.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        setSpeechOverlayText('');
+        if (event.error === 'not-allowed') {
+          alert('Microphone access is required for speech input. Please check your browser settings and permissions.');
+        }
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+        setSpeechOverlayText('');
+        if (silenceTimeout) {
+          clearTimeout(silenceTimeout);
+        }
+      };
+
+      setRecognition(rec);
+      setIsSpeechSupported(true);
+    } else {
+      setIsSpeechSupported(false);
+    }
+
+    return () => {
+      if (silenceTimeout) {
+        clearTimeout(silenceTimeout);
+      }
+    };
+  }, [silenceTimeout, browserRecognition, browserSupported, speechBaseText]);
+
+  const handleMicClick = async () => {
+    if (!isSpeechSupported) {
+      alert('Speech recognition is not supported in your browser. Please try using Chrome, Edge, or Safari.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+
+      if (recognition) {
+        if (isListening) {
+          recognition.stop();
+          setIsListening(false);
+          setSpeechOverlayText('');
+        } else {
+          try {
+            setSpeechOverlayText('');
+            setSpeechBaseText(message);
+            recognition.start();
+            setIsListening(true);
+          } catch (error) {
+            console.error('Speech recognition start error:', error);
+            if (error instanceof Error && error.name === 'NotAllowedError') {
+              alert('Microphone access was denied. Please allow microphone access in your browser settings.');
+            } else {
+              alert('There was an error starting speech recognition. Please try again.');
+            }
+            setIsListening(false);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Microphone permission denied:', error);
+      alert('Please allow microphone access to use speech input. Check your browser settings if the permission dialog doesn\'t appear.');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      onStartChat(message.trim());
+      onStartChat(message);
     }
   };
 
@@ -28,80 +212,156 @@ export default function WelcomeSection({ onStartChat }: WelcomeSectionProps) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (message.trim()) {
-        onStartChat(message.trim());
+        onStartChat(message);
       }
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-      {/* Hero */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl bg-nilgai-blue/10 flex items-center justify-center mx-auto mb-5">
-          <svg className="w-8 h-8 text-nilgai-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-          </svg>
+    <div className="flex flex-col h-full px-6 py-10 antialiased relative">
+      <div className="mb-8">
+        <div className="flex items-center justify-center mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/nilgai-logo.svg"
+            alt="NilgAI"
+            width={150}
+            height={48}
+            className="h-12"
+          />
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Where would you like to go?</h1>
-        <p className="text-nilgai-gray-400 text-sm">
-          I&apos;ll help you find flights, hotels, transfers, and experiences — all in one place.
+        <p className="text-gray-600 text-sm leading-relaxed mt-4 hidden">
+          AI-powered travel booking.
         </p>
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="w-full max-w-md mb-6">
-        <div className="relative rounded-xl border border-nilgai-gray-700 bg-nilgai-gray-800 shadow-lg focus-within:border-nilgai-blue/50 transition-colors">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Plan a trip, find a hotel, book an experience..."
-            rows={2}
-            className="w-full pt-3 pb-1.5 px-4 text-sm bg-transparent text-white rounded-xl
-                       focus:outline-none placeholder:text-nilgai-gray-500 resize-none
-                       leading-5"
-            style={{ fontSize: '16px' }}
-          />
-          <div className="flex items-center justify-end px-3 pb-2">
-            {message.trim() && (
-              <button
-                type="submit"
-                className="p-1.5 rounded-lg text-nilgai-orange hover:bg-nilgai-gray-700 transition-colors"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </div>
-      </form>
+      <div className="w-full mb-6">
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="rounded-xl border border-gray-200 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+            <div className="relative">
+              <textarea
+                value={message}
+                onChange={handleTextChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {}}
+                onBlur={handleBlur}
+                placeholder={isListening ? "Listening..." : "I'm Jess, your AI travel assistant. Ask me about flights, hotels, transfers, and experiences."}
+                className="w-full pt-3 pb-1.5 px-4 text-base bg-white rounded-xl focus:outline-none focus:ring-0 focus:border-none placeholder:text-gray-400 resize-none overflow-y-auto transition-height duration-200 leading-5 border-none outline-none"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#E5E7EB transparent',
+                  height: '58px',
+                  WebkitAppearance: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  overflowAnchor: 'auto',
+                  overflowY: 'auto',
+                  position: 'relative',
+                  zIndex: 1,
+                  touchAction: 'auto',
+                  fontSize: (() => {
+                    const browserWidth = typeof window !== 'undefined' ? window.screen.width : 0;
+                    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+                    const isDesktopBrowser = browserWidth > 1000 || windowWidth > 600;
+                    return isDesktopBrowser ? '14px' : '16px';
+                  })()
+                }}
+              />
+            </div>
 
-      {/* Suggestions */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-md">
+            <div className="flex items-center justify-end gap-1 pt-1 pb-2 px-3 bg-white rounded-b-xl min-h-[36px]">
+              {isListening ? (
+                <div className="flex items-center gap-2 h-[32px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-gray-500">
+                      {speechOverlayText ? 'Processing...' : 'Listening...'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMicClick}
+                    className="p-1.5 rounded-lg text-[#161616] hover:bg-gray-100 transition-colors"
+                    title="Click to stop recording"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-[#161616] flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-sm"></div>
+                    </div>
+                  </button>
+                </div>
+              ) : message.trim() && (
+                <>
+                  {isSpeechSupported && (
+                    <button
+                      type="button"
+                      onClick={handleMicClick}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
+                      title="Click to add more with voice"
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
+                  >
+                    <Send className="w-5 h-5 text-gray-600" />
+                  </button>
+                </>
+              )}
+
+              {/* Show only mic when no text */}
+              {!message.trim() && !isListening && isSpeechSupported && (
+                <button
+                  type="button"
+                  onClick={handleMicClick}
+                  className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
+                  title="Click to start voice input"
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div className="flex flex-wrap gap-2 justify-start">
         {suggestions.map((s) => (
-          <button
+          <SuggestionButton
             key={s.text}
+            icon={s.icon}
+            text={s.text}
             onClick={() => onStartChat(s.message)}
-            className="px-3 py-2 rounded-full border border-nilgai-gray-700 bg-nilgai-gray-800/50
-                       hover:bg-nilgai-gray-700 hover:border-nilgai-gray-600 transition-all
-                       text-sm text-nilgai-gray-300 flex items-center gap-2"
-          >
-            <span>{s.icon}</span>
-            {s.text}
-          </button>
+          />
         ))}
       </div>
 
-      {/* Footer */}
-      <div className="mt-auto pt-8">
-        <a
-          href="https://nilgai.ai/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-nilgai-gray-600 hover:text-nilgai-gray-400 transition-colors"
-        >
-          Powered by NilgAI
-        </a>
+      <BadgesSection />
+
+      <div className="text-center mt-4">
+        <a href="https://nilgai.ai/" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Powered by NilgAI</a>
       </div>
     </div>
+  );
+}
+
+function SuggestionButton({
+  icon,
+  text,
+  onClick
+}: {
+  icon: string;
+  text: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-3 py-1.5 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition-colors text-sm text-gray-500 flex items-center gap-2 font-medium"
+    >
+      <span className="text-base">{icon}</span>
+      {text}
+    </button>
   );
 }

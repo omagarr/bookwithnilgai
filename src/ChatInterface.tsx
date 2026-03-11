@@ -241,10 +241,10 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
           {/* Text content */}
           {msg.content && (
             <div
-              className={`text-sm leading-relaxed whitespace-pre-wrap ${
+              className={`text-sm leading-normal whitespace-pre-wrap rounded-lg px-4 py-2 ${
                 isUser
-                  ? 'bg-nilgai-blue text-white rounded-2xl rounded-br-md px-4 py-2.5'
-                  : 'bg-nilgai-gray-800 text-white rounded-2xl rounded-bl-md px-4 py-2.5'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-800'
               }`}
             >
               {msg.content}
@@ -352,19 +352,19 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}
       >
         {messages.map(renderMessage)}
 
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex justify-start mb-3">
-            <div className="bg-nilgai-gray-800 rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="bg-gray-100 rounded-lg px-4 py-3">
               <div className="flex gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-nilgai-gray-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-nilgai-gray-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-nilgai-gray-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </div>
@@ -374,54 +374,46 @@ export default function ChatInterface({ initialMessage, onRestart }: ChatInterfa
       </div>
 
       {/* Input area */}
-      <div className="flex-shrink-0 border-t border-nilgai-gray-800 px-4 py-3 bg-nilgai-gray-900">
+      <div className="flex-shrink-0 px-4 py-3 bg-white">
         {isDemoComplete ? (
           <button
             onClick={onRestart}
-            className="w-full py-3 bg-nilgai-orange text-white font-semibold rounded-xl
+            className="w-full py-3 bg-[#1b3a4b] text-white font-semibold rounded-xl
                        hover:-translate-y-px hover:shadow-lg transition-all duration-200 min-h-[48px]"
           >
             Restart Demo
           </button>
         ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage(message);
-            }}
-            className="flex items-end gap-2"
-          >
-            <div className="flex-1 relative rounded-xl border border-nilgai-gray-700 bg-nilgai-gray-800 focus-within:border-nilgai-blue/50 transition-colors">
-              <textarea
-                ref={textareaRef}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(message);
-                  }
-                }}
-                placeholder={isLoading ? 'Thinking...' : 'Type anything to continue...'}
-                disabled={isLoading}
-                rows={1}
-                className="w-full py-3 px-4 text-sm bg-transparent text-white rounded-xl
-                           focus:outline-none placeholder:text-nilgai-gray-500 resize-none
-                           disabled:opacity-50"
-                style={{ fontSize: '16px' }}
-              />
-            </div>
-            <button
-              type="submit"
+          <div className="rounded-xl border border-gray-200 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+            <textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(message);
+                }
+              }}
+              placeholder={isLoading ? 'Thinking...' : 'Ask a follow up...'}
               disabled={isLoading}
-              className="p-3 bg-nilgai-orange text-white rounded-xl
-                         hover:-translate-y-px hover:shadow-md transition-all duration-200
-                         disabled:opacity-50 disabled:hover:translate-y-0 min-w-[48px] min-h-[48px]
-                         flex items-center justify-center"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </form>
+              rows={2}
+              className="w-full pt-3 pb-1.5 px-4 text-sm bg-white rounded-t-xl text-gray-800
+                         focus:outline-none focus:ring-0 placeholder:text-gray-400 resize-none
+                         disabled:opacity-50"
+              style={{ fontSize: '16px' }}
+            />
+            <div className="flex items-center justify-end gap-1 pt-1 pb-2 px-3 bg-white rounded-b-xl min-h-[36px]">
+              <button
+                onClick={() => handleSendMessage(message)}
+                disabled={isLoading}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors
+                           disabled:opacity-50"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
