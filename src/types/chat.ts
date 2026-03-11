@@ -103,6 +103,7 @@ export interface ExperienceOptionData {
   reviewCount: number;
   description: string;
   pricePerPerson: number;
+  totalPrice: number;
   currency: string;
 }
 
