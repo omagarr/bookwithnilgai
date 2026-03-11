@@ -22,27 +22,55 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ initialMessage, onRestart }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Restore persisted state from localStorage
+  const savedState = typeof window !== 'undefined'
+    ? (() => {
+        try {
+          const raw = localStorage.getItem('chatState');
+          return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+      })()
+    : null;
+
+  const [messages, setMessages] = useState<Message[]>(savedState?.messages ?? []);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isDemoComplete, setIsDemoComplete] = useState(false);
-  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
-  const [waitingForCardSelect, setWaitingForCardSelect] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(savedState?.currentStep ?? 0);
+  const [isDemoComplete, setIsDemoComplete] = useState(savedState?.isDemoComplete ?? false);
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(
+    new Set(savedState?.selectedCards ?? [])
+  );
+  const [waitingForCardSelect, setWaitingForCardSelect] = useState(savedState?.waitingForCardSelect ?? false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const [silenceTimeout, setSilenceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [speechOverlayText, setSpeechOverlayText] = useState('');
   const [speechBaseText, setSpeechBaseText] = useState('');
-  const [expandedFlights, setExpandedFlights] = useState<Set<string>>(new Set());
+  const [expandedFlights, setExpandedFlights] = useState<Set<string>>(
+    new Set(savedState?.expandedFlights ?? [])
+  );
 
   const { recognition: browserRecognition, isSupported: browserSupported } = useBrowserSpeech();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const hasInitialized = useRef(false);
+  const hasInitialized = useRef(savedState?.messages?.length > 0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist conversation state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('chatState', JSON.stringify({
+        messages,
+        currentStep,
+        isDemoComplete,
+        selectedCards: Array.from(selectedCards),
+        waitingForCardSelect,
+        expandedFlights: Array.from(expandedFlights),
+      }));
+    } catch { /* ignore quota errors */ }
+  }, [messages, currentStep, isDemoComplete, selectedCards, waitingForCardSelect, expandedFlights]);
 
   // Scroll to bottom (with flex-col-reverse, scrollTop=0 is the visual bottom)
   const scrollToBottom = useCallback(() => {

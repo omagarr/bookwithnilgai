@@ -6,8 +6,18 @@ import WelcomeSection from './WelcomeSection';
 import ChatInterface from './ChatInterface';
 
 export default function ChatPopup() {
-  const [hasStartedChat, setHasStartedChat] = useState(false);
-  const [initialMessage, setInitialMessage] = useState('');
+  const [hasStartedChat, setHasStartedChat] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try { return localStorage.getItem('chatStarted') === 'true'; } catch { return false; }
+    }
+    return false;
+  });
+  const [initialMessage, setInitialMessage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try { return localStorage.getItem('chatInitialMessage') || ''; } catch { return ''; }
+    }
+    return '';
+  });
   const [isMinimized, setIsMinimized] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -23,17 +33,29 @@ export default function ChatPopup() {
   const handleStartChat = useCallback((message: string) => {
     setInitialMessage(message);
     setHasStartedChat(true);
+    try {
+      localStorage.setItem('chatStarted', 'true');
+      localStorage.setItem('chatInitialMessage', message);
+    } catch { /* ignore */ }
+  }, []);
+
+  const clearChatState = useCallback(() => {
+    setHasStartedChat(false);
+    setInitialMessage('');
+    try {
+      localStorage.removeItem('chatStarted');
+      localStorage.removeItem('chatInitialMessage');
+      localStorage.removeItem('chatState');
+    } catch { /* ignore */ }
   }, []);
 
   const handleRestart = useCallback(() => {
-    setHasStartedChat(false);
-    setInitialMessage('');
-  }, []);
+    clearChatState();
+  }, [clearChatState]);
 
   const handleBack = useCallback(() => {
-    setHasStartedChat(false);
-    setInitialMessage('');
-  }, []);
+    clearChatState();
+  }, [clearChatState]);
 
   const handleClose = useCallback(() => {
     setIsMinimized(true);
