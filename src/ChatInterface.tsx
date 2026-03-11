@@ -298,16 +298,17 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   );
 
   // Handle card selection
+  // groupIds: all card IDs in this group (for auto-advance detection)
+  // singleSelect: if true, deselect other cards in the group before selecting
   const handleCardSelect = useCallback(
-    (cardId: string, siblingIds?: string[]) => {
-      // Track whether this is the first selection in a single-select group
-      const isFirstSingleSelect = !!siblingIds && !siblingIds.some(id => selectedCardsRef.current.has(id));
+    (cardId: string, groupIds: string[], singleSelect: boolean) => {
+      // Is this the first selection in the group?
+      const isFirstInGroup = !groupIds.some(id => selectedCardsRef.current.has(id));
 
       setSelectedCards((prev) => {
         const next = new Set(prev);
-        // If siblings provided, deselect them first (single-select within group)
-        if (siblingIds) {
-          for (const id of siblingIds) {
+        if (singleSelect) {
+          for (const id of groupIds) {
             next.delete(id);
           }
         }
@@ -315,9 +316,8 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         return next;
       });
 
-      // Auto-advance on first selection for single-select groups (flights, hotels, transfers)
-      if (isFirstSingleSelect) {
-        // Small delay so the selected state renders before advancing
+      // Auto-advance on first selection in any group
+      if (isFirstInGroup) {
         setTimeout(() => advanceScript(''), 600);
       }
     },
@@ -343,11 +343,6 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     advanceScript('');
   }, [advanceScript]);
 
-  // Handle experience multi-select completion (via text input)
-  const handleExperiencesDone = useCallback(() => {
-    advanceScript('');
-  }, [advanceScript]);
-
   // Handle booking confirmation
   const handleBookingConfirm = useCallback(() => {
     // Remove the confirmation message
@@ -363,10 +358,10 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     });
   }, [addMessage]);
 
-  // Handle trip confirmation "Proceed to Checkout" button
+  // Handle trip confirmation "Review Trip" button → open checkout overlay
   const handleTripConfirmationCheckout = useCallback(() => {
-    advanceScript('');
-  }, [advanceScript]);
+    toggleCheckout(true);
+  }, [toggleCheckout]);
 
   // Handle trip summary "Book Trip" button
   const handleBookTrip = useCallback(() => {
@@ -378,15 +373,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     (content: string) => {
       if (!content.trim() || isLoading || isDemoComplete) return;
       setMessage('');
-      // If experiences are shown and some selected, advance on submit
-      const lastMsgWithExperiences = [...messages].reverse().find((m) => m.experienceOptions);
-      if (lastMsgWithExperiences && selectedCards.size > 0) {
-        handleExperiencesDone();
-      } else {
-        advanceScript(content);
-      }
+      advanceScript(content);
     },
-    [isLoading, isDemoComplete, advanceScript, messages, selectedCards, handleExperiencesDone]
+    [isLoading, isDemoComplete, advanceScript]
   );
 
   // Speech recognition setup
@@ -512,7 +501,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                 <FlightOption
                   key={flight.id}
                   data={flight}
-                  onSelect={() => handleCardSelect(flight.id, msg.flightOptions!.map(f => f.id))}
+                  onSelect={() => handleCardSelect(flight.id, msg.flightOptions!.map(f => f.id), true)}
                   onDeselect={() => handleCardDeselect(flight.id)}
                   selected={selectedCards.has(flight.id)}
                   animationDelay={i * 150}
@@ -536,7 +525,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                 <HotelOption
                   key={hotel.id}
                   data={hotel}
-                  onSelect={() => handleCardSelect(hotel.id, msg.hotelOptions!.map(h => h.id))}
+                  onSelect={() => handleCardSelect(hotel.id, msg.hotelOptions!.map(h => h.id), true)}
                   onDeselect={() => handleCardDeselect(hotel.id)}
                   selected={selectedCards.has(hotel.id)}
                   animationDelay={i * 150}
@@ -560,7 +549,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                 <TransferOption
                   key={transfer.id}
                   data={transfer}
-                  onSelect={() => handleCardSelect(transfer.id, msg.transferOptions!.map(t => t.id))}
+                  onSelect={() => handleCardSelect(transfer.id, msg.transferOptions!.map(t => t.id), true)}
                   onDeselect={() => handleCardDeselect(transfer.id)}
                   selected={selectedCards.has(transfer.id)}
                   animationDelay={i * 150}
@@ -584,7 +573,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
                 <ExperienceOption
                   key={exp.id}
                   data={exp}
-                  onSelect={() => handleCardSelect(exp.id)}
+                  onSelect={() => handleCardSelect(exp.id, msg.experienceOptions!.map(e => e.id), false)}
                   onDeselect={() => handleCardDeselect(exp.id)}
                   selected={selectedCards.has(exp.id)}
                   animationDelay={i * 150}
@@ -610,7 +599,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
           )}
 
           {/* Trip confirmation */}
-          {msg.tripConfirmation && (
+          {msg.tripConfirmation?.summary && (
             <div>
               <TripConfirmation data={msg.tripConfirmation} onCheckout={handleTripConfirmationCheckout} />
             </div>

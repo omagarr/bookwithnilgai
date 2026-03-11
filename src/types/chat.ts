@@ -137,11 +137,8 @@ export interface TripSummaryData {
 }
 
 export interface TripConfirmationData {
-  selectedExperiences: Array<{
-    label: string;
-    price: number;
-  }>;
-  tripTotal: number;
+  summary: string;
+  totalPrice: number;
   currency: string;
 }
 

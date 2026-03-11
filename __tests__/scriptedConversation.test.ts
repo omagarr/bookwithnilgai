@@ -116,8 +116,8 @@ describe('Scripted Conversation', () => {
     });
   });
 
-  it('should have the correct number of steps (13)', () => {
-    expect(scriptedConversation.length).toBe(13);
+  it('should have the correct number of steps (10)', () => {
+    expect(scriptedConversation.length).toBe(10);
   });
 
   it('first step should trigger on userInput', () => {
@@ -153,27 +153,14 @@ describe('Scripted Conversation', () => {
     });
   });
 
-  it('trip summary total should equal sum of all items', () => {
-    const summaryStep = scriptedConversation.find((step: ScriptStep) =>
-      step.assistantMessages.some((m) => m.tripSummary)
+  it('trip confirmation total should equal sum of all items', () => {
+    const confirmStep = scriptedConversation.find((step: ScriptStep) =>
+      step.assistantMessages.some((m) => m.tripConfirmation)
     );
-    const summary = summaryStep!.assistantMessages.find((m) => m.tripSummary)!.tripSummary!;
-    const itemsTotal =
-      summary.flight.price +
-      summary.hotel.price +
-      summary.transfer.price +
-      summary.experiences.reduce((sum, exp) => sum + exp.price, 0);
-    expect(summary.totalPrice).toBe(itemsTotal);
-  });
-
-  it('booking complete step should have a booking reference', () => {
-    const completeStep = scriptedConversation.find((step: ScriptStep) =>
-      step.assistantMessages.some((m) => m.bookingComplete)
-    );
-    expect(completeStep).toBeDefined();
-    const completeMsg = completeStep!.assistantMessages.find((m) => m.bookingComplete);
-    expect(completeMsg!.bookingComplete!.bookingRef).toBeDefined();
-    expect(completeMsg!.bookingComplete!.bookingRef.length).toBeGreaterThan(0);
+    expect(confirmStep).toBeDefined();
+    const confirmation = confirmStep!.assistantMessages.find((m) => m.tripConfirmation)!.tripConfirmation!;
+    // Total = flights (189*2) + hotel (360) + transfer (65) + experiences ((45+65)*2)
+    expect(confirmation.totalPrice).toBe(378 + 360 + 65 + 220);
   });
 
   it('delays should be reasonable (0-10000ms)', () => {
@@ -187,21 +174,13 @@ describe('Scripted Conversation', () => {
   it('should dynamically compute prices based on traveler count', () => {
     const state3: ConversationState = { ...defaultState, travelerCount: 3 };
     const script3 = getScriptedConversation(state3);
-    const summary3 = script3.find((s: ScriptStep) =>
-      s.assistantMessages.some((m) => m.tripSummary)
-    )!.assistantMessages.find((m) => m.tripSummary)!.tripSummary!;
+    const confirm3 = script3.find((s: ScriptStep) =>
+      s.assistantMessages.some((m) => m.tripConfirmation)
+    )!.assistantMessages.find((m) => m.tripConfirmation)!.tripConfirmation!;
 
-    // Flight: 189 × 3 = 567
-    expect(summary3.flight.price).toBe(567);
-    // Hotel stays the same (per room): 360
-    expect(summary3.hotel.price).toBe(360);
-    // Transfer stays the same (per vehicle): 65
-    expect(summary3.transfer.price).toBe(65);
-    // Experiences: (45 + 65) × 3 = 330
-    const expTotal = summary3.experiences.reduce((sum, e) => sum + e.price, 0);
-    expect(expTotal).toBe(330);
+    // Flight: 189 × 3 = 567, Hotel: 360, Transfer: 65, Experiences: (45+65) × 3 = 330
     // Total: 567 + 360 + 65 + 330 = 1322
-    expect(summary3.totalPrice).toBe(1322);
+    expect(confirm3.totalPrice).toBe(1322);
   });
 
   it('should use selected item names in user messages', () => {

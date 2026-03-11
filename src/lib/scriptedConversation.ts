@@ -397,7 +397,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 10: Experiences selected → Trip confirmation with total + checkout
+    // Step 10: Experiences selected → Trip confirmation with humanised summary
     {
       trigger: 'cardSelect',
       userMessage: se.length > 0
@@ -405,64 +405,25 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
         : 'Add these experiences',
       assistantMessages: [
         {
-          content: "Great choices! Here's what I've added:",
+          content: '',
           delay: 1500,
           tripConfirmation: {
-            selectedExperiences: expItems,
-            tripTotal,
+            summary: [
+              `Here's your Paris weekend for ${tc} — `,
+              sf ? `flying ${sf.airline} (${sf.departureAirport} → ${sf.arrivalAirport}, ${sf.stops === 0 ? 'direct' : `${sf.stops} stop`}) on Mar 14, ` : '',
+              sh ? `staying ${sh.nights} night${sh.nights > 1 ? 's' : ''} at ${sh.name} in ${sh.location}, ` : '',
+              st ? `with a ${st.vehicleType.toLowerCase()} transfer from the airport, ` : '',
+              se.length > 0
+                ? `plus ${se.map(e => e.title).join(' and ')} for ${plural ? 'the group' : 'you'}.`
+                : '',
+              `\n\nTotal comes to £${tripTotal.toLocaleString()}.`,
+            ].filter(Boolean).join(''),
+            totalPrice: tripTotal,
             currency: '£',
           },
         },
       ],
     },
 
-    // Step 11: Checkout → Trip summary
-    {
-      trigger: 'cardSelect',
-      userMessage: 'Proceed to checkout',
-      assistantMessages: [
-        {
-          content: "Here's your complete Paris weekend:",
-          delay: 1500,
-          tripSummary: buildTripSummary(),
-        },
-      ],
-    },
-
-    // Step 12: Booking confirmation flow
-    {
-      trigger: 'cardSelect',
-      userMessage: "Let's book it!",
-      assistantMessages: [
-        {
-          content: "Here's your final booking summary. Please confirm to proceed:",
-          delay: 1000,
-          bookingConfirmation: {
-            tripSummary: buildTripSummary(),
-          },
-        },
-      ],
-    },
-
-    // Step 13: Booking complete
-    {
-      trigger: 'cardSelect',
-      userMessage: 'Confirmed!',
-      assistantMessages: [
-        {
-          content: '',
-          delay: 0,
-          bookingProcessing: true,
-        },
-        {
-          content: '',
-          delay: 4000,
-          bookingComplete: {
-            bookingRef: 'NLG-PAR-2026-7842',
-            tripSummary: buildTripSummary(),
-          },
-        },
-      ],
-    },
   ];
 }
