@@ -695,14 +695,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     <div className="flex-1 flex flex-col overflow-hidden relative">
       {/* Trip total subheader (hidden when checkout overlay is open) */}
       {tripTotal && !showCheckout && (
-        <div className="flex-shrink-0 flex items-center justify-between px-5 py-2 bg-teal-50 border-b border-teal-100 shadow-[0_2px_6px_rgba(255,255,255,0.5)] z-10">
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 bg-teal-50 border-b border-teal-100 shadow-[0_2px_6px_rgba(255,255,255,0.5)] z-10">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-600">Trip total:</span>
             <span className="text-sm font-bold text-gray-900">{tripTotal.currency}{tripTotal.total.toLocaleString()}</span>
           </div>
           <button
             onClick={() => toggleCheckout(true)}
-            className="text-[11px] font-bold tracking-wider text-teal-700 hover:text-teal-900 transition-colors"
+            className="text-[13px] font-bold tracking-wider text-teal-700 hover:text-teal-900 transition-colors"
           >
             CHECKOUT
           </button>
