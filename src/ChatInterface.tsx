@@ -740,34 +740,18 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
               <span className="text-lg font-bold text-gray-900">{tripTotal.currency}{tripTotal.total.toLocaleString()}</span>
             </div>
 
-            {/* Booking link preview */}
-            <div
-              className="border border-gray-200 hover:border-gray-300 rounded-lg p-3 mt-4 cursor-pointer transition-all duration-200 bg-gray-50/50 hover:bg-gray-50 hover:shadow-sm"
+            {/* Book Now CTA */}
+            <button
               onClick={() => window.open('https://kayak.co.uk', '_blank', 'noopener,noreferrer')}
+              className="w-full mt-4 py-3 bg-[#0e3b43] text-white text-sm font-semibold rounded-xl
+                         hover:-translate-y-px hover:shadow-md transition-all duration-200
+                         active:translate-y-0 min-h-[44px]"
             >
-              <div className="flex gap-3">
-                <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img src="/Kayak.svg" alt="Kayak" className="w-full h-full" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 truncate mb-0.5">
-                        Complete your booking
-                      </h4>
-                      <p className="text-xs text-gray-500 mb-1">
-                        Secure checkout · Instant confirmation · Free cancellation
-                      </p>
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
-                        <Globe className="w-3 h-3" />
-                        <span className="truncate">kayak.co.uk</span>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
-                  </div>
-                </div>
-              </div>
-            </div>
+              <span className="flex items-center justify-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Book Now
+              </span>
+            </button>
 
             <div className="text-center mt-4">
               <a href="https://nilgai.ai/" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Powered by NilgAI</a>
