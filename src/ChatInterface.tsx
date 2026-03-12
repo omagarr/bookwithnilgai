@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Send, Mic, ExternalLink, Globe } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, ScriptStep, FlightOptionData, HotelOptionData, TransferOptionData, ExperienceOptionData } from '@/types/chat';
+import { Message, ScriptStep, FlightOptionData, HotelOptionData, TransferOptionData, ExperienceOptionData, RoomTypeOptionData } from '@/types/chat';
 import { getScriptedConversation, ConversationState } from '@/lib/scriptedConversation';
 import FlightOption from '@/components/FlightOption';
 import HotelOption from '@/components/HotelOption';
 import TransferOption from '@/components/TransferOption';
 import ExperienceOption from '@/components/ExperienceOption';
+import RoomTypeOption from '@/components/RoomTypeOption';
 import TravelerCount from '@/components/TravelerCount';
 import TripConfirmation from '@/components/TripConfirmation';
 import TripSummary from '@/components/TripSummary';
@@ -72,6 +73,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
     const cards = selectedCardsRef.current;
     let flight: FlightOptionData | null = null;
     let hotel: HotelOptionData | null = null;
+    let roomType: RoomTypeOptionData | null = null;
     let transfer: TransferOptionData | null = null;
     const experiences: ExperienceOptionData[] = [];
 
@@ -86,6 +88,11 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
           if (cards.has(h.id)) hotel = h;
         }
       }
+      if (msg.roomTypeOptions) {
+        for (const r of msg.roomTypeOptions) {
+          if (cards.has(r.id)) roomType = r;
+        }
+      }
       if (msg.transferOptions) {
         for (const t of msg.transferOptions) {
           if (cards.has(t.id)) transfer = t;
@@ -98,7 +105,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       }
     }
 
-    return { flight, hotel, transfer, experiences };
+    return { flight, hotel, roomType, transfer, experiences };
   }, []);
 
   // Build conversation state for dynamic script generation
@@ -108,6 +115,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       travelerCount: travelerCountRef.current,
       selectedFlight: items.flight,
       selectedHotel: items.hotel,
+      selectedRoomType: items.roomType,
       selectedTransfer: items.transfer,
       selectedExperiences: items.experiences,
     };
@@ -216,6 +224,7 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
         // Determine if this message has rich content (non-card types)
         const richContent: Partial<Message> = {};
         if (scriptedMsg.travelerCountOptions) richContent.travelerCountOptions = scriptedMsg.travelerCountOptions;
+        if (scriptedMsg.roomTypeOptions) richContent.roomTypeOptions = scriptedMsg.roomTypeOptions;
         if (scriptedMsg.tripConfirmation) richContent.tripConfirmation = scriptedMsg.tripConfirmation;
         if (scriptedMsg.tripSummary) richContent.tripSummary = scriptedMsg.tripSummary;
         if (scriptedMsg.bookingConfirmation) richContent.bookingConfirmation = scriptedMsg.bookingConfirmation;
@@ -474,9 +483,9 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
   const renderMessage = (msg: Message) => {
     const isUser = msg.role === 'user';
     const hasCards = msg.travelerCountOptions || msg.flightOptions || msg.hotelOptions
-      || msg.transferOptions || msg.experienceOptions || msg.tripConfirmation
-      || msg.tripSummary || msg.bookingConfirmation || msg.bookingProcessing
-      || msg.bookingComplete;
+      || msg.roomTypeOptions || msg.transferOptions || msg.experienceOptions
+      || msg.tripConfirmation || msg.tripSummary || msg.bookingConfirmation
+      || msg.bookingProcessing || msg.bookingComplete;
 
     return (
       <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
@@ -598,6 +607,28 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
             />
           )}
 
+          {/* Room type options */}
+          {msg.roomTypeOptions && (() => {
+            const anySelected = msg.roomTypeOptions.some(r => selectedCards.has(r.id));
+            const selectedHotel = messages.flatMap(m => m.hotelOptions || []).find(h => selectedCards.has(h.id));
+            const nights = selectedHotel?.nights ?? 2;
+            return (
+              <div className="space-y-2 mt-2">
+                {msg.roomTypeOptions.map((room, i) => (
+                  <RoomTypeOption
+                    key={room.id}
+                    data={room}
+                    nights={nights}
+                    onSelect={() => handleCardSelect(room.id, msg.roomTypeOptions!.map(r => r.id), true)}
+                    selected={selectedCards.has(room.id)}
+                    disabled={anySelected}
+                    animationDelay={i * 150}
+                  />
+                ))}
+              </div>
+            );
+          })()}
+
           {/* Trip confirmation */}
           {msg.tripConfirmation?.summary && (
             <div>
@@ -661,9 +692,14 @@ export default function ChatInterface({ initialMessage, onRestart, onCheckoutCha
       if (msg.hotelOptions) {
         for (const h of msg.hotelOptions) {
           if (selectedCards.has(h.id)) {
-            total += h.totalPrice;
+            // Find selected room type upgrade
+            const selectedRoom = messages.flatMap(m => m.roomTypeOptions || []).find(r => selectedCards.has(r.id));
+            const roomUpgrade = selectedRoom ? selectedRoom.surchargePerNight * h.nights : 0;
+            const hotelPrice = h.totalPrice + roomUpgrade;
+            total += hotelPrice;
             currency = currency || h.currency;
-            items.push({ label: 'Hotel', detail: `${h.name} · ${h.nights} nights`, price: h.totalPrice });
+            const roomDetail = selectedRoom ? ` · ${selectedRoom.name}` : '';
+            items.push({ label: 'Hotel', detail: `${h.name} · ${h.nights} nights${roomDetail}`, price: hotelPrice });
           }
         }
       }

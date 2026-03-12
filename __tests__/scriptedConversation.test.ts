@@ -28,6 +28,13 @@ const defaultState: ConversationState = {
     currency: '£',
     nights: 2,
   },
+  selectedRoomType: {
+    id: 'room-1',
+    name: 'Standard Room',
+    description: 'Cosy double with city view',
+    surchargePerNight: 0,
+    currency: '£',
+  },
   selectedTransfer: {
     id: 'transfer-1',
     vehicleType: 'Private Sedan',

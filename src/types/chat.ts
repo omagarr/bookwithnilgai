@@ -20,6 +20,7 @@ export interface ScriptedMessage {
   hotelOptions?: HotelOptionData[];
   transferOptions?: TransferOptionData[];
   experienceOptions?: ExperienceOptionData[];
+  roomTypeOptions?: RoomTypeOptionData[];
   tripConfirmation?: TripConfirmationData;
   tripSummary?: TripSummaryData;
   bookingConfirmation?: BookingConfirmationData;
@@ -43,6 +44,7 @@ export interface Message {
   hotelOptions?: HotelOptionData[];
   transferOptions?: TransferOptionData[];
   experienceOptions?: ExperienceOptionData[];
+  roomTypeOptions?: RoomTypeOptionData[];
   tripConfirmation?: TripConfirmationData;
   tripSummary?: TripSummaryData;
   bookingConfirmation?: BookingConfirmationData;
@@ -99,6 +101,15 @@ export interface TransferOptionData {
   };
 }
 
+export interface RoomTypeOptionData {
+  id: string;
+  name: string;
+  description: string;
+  /** Extra cost per night on top of the base hotel price. 0 = included. */
+  surchargePerNight: number;
+  currency: string;
+}
+
 export interface ExperienceOptionData {
   id: string;
   title: string;
@@ -122,6 +133,7 @@ export interface TripSummaryData {
     label: string;
     details: string;
     price: number;
+    roomType?: string;
   };
   transfer: {
     label: string;

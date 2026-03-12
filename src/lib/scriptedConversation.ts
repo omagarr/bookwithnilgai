@@ -1,9 +1,10 @@
-import { ScriptStep, FlightOptionData, HotelOptionData, TransferOptionData, ExperienceOptionData } from '@/types/chat';
+import { ScriptStep, FlightOptionData, HotelOptionData, TransferOptionData, ExperienceOptionData, RoomTypeOptionData } from '@/types/chat';
 
 export interface ConversationState {
   travelerCount: number;
   selectedFlight: FlightOptionData | null;
   selectedHotel: HotelOptionData | null;
+  selectedRoomType: RoomTypeOptionData | null;
   selectedTransfer: TransferOptionData | null;
   selectedExperiences: ExperienceOptionData[];
 }
@@ -129,6 +130,30 @@ const hotelOptions: HotelOptionData[] = [
   },
 ];
 
+const roomTypeOptions: RoomTypeOptionData[] = [
+  {
+    id: 'room-1',
+    name: 'Standard Room',
+    description: 'Cosy double with city view',
+    surchargePerNight: 0,
+    currency: '£',
+  },
+  {
+    id: 'room-2',
+    name: 'Deluxe Room',
+    description: 'Spacious with lounge area',
+    surchargePerNight: 45,
+    currency: '£',
+  },
+  {
+    id: 'room-3',
+    name: 'Junior Suite',
+    description: 'Premium suite with terrace',
+    surchargePerNight: 95,
+    currency: '£',
+  },
+];
+
 const transferOptions: TransferOptionData[] = [
   {
     id: 'transfer-1',
@@ -224,14 +249,15 @@ const experienceOptions: ExperienceOptionData[] = [
 // ==========================================
 
 export function getScriptedConversation(state: ConversationState): ScriptStep[] {
-  const { travelerCount: tc, selectedFlight: sf, selectedHotel: sh, selectedTransfer: st, selectedExperiences: se } = state;
+  const { travelerCount: tc, selectedFlight: sf, selectedHotel: sh, selectedRoomType: sr, selectedTransfer: st, selectedExperiences: se } = state;
 
   const plural = tc !== 1;
   const pax = `${tc} passenger${plural ? 's' : ''}`;
 
   // Compute totals from actual selections
   const flightTotal = sf ? sf.price * tc : 0;
-  const hotelTotal = sh ? sh.totalPrice : 0;
+  const roomUpgrade = sr && sh ? sr.surchargePerNight * sh.nights : 0;
+  const hotelTotal = (sh ? sh.totalPrice : 0) + roomUpgrade;
   const transferTotal = st ? st.price : 0;
   const expItems = se.map(e => ({
     label: `${e.title} × ${tc}`,
@@ -252,6 +278,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       label: sh ? `${sh.name} ${'★'.repeat(Math.round(sh.stars))}` : '',
       details: sh ? `${sh.location} · ${sh.nights} night${sh.nights > 1 ? 's' : ''} · Mar 14–16` : '',
       price: hotelTotal,
+      roomType: sr?.name,
     },
     transfer: {
       label: st ? st.vehicleType : '',
@@ -272,7 +299,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       userMessage: 'I want to plan a weekend trip to Paris',
       assistantMessages: [
         {
-          content: "Great choice! Paris is wonderful for a weekend getaway. How many people are travelling?",
+          content: "Great choice! Paris is wonderful for a weekend getaway. I'm assuming you'll be flying from London — let me know if that's different. How many people are travelling?",
           delay: 1500,
           travelerCountOptions: [1, 2, 3, 4, 5, 6, 7, 8],
         },
@@ -337,7 +364,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 6: Hotel selected → Ask about transfer preference
+    // Step 6: Hotel selected → Ask about room type
     {
       trigger: 'cardSelect',
       userMessage: sh
@@ -346,14 +373,31 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       assistantMessages: [
         {
           content: sh
-            ? `Great taste! ${sh.name} — ${sh.nights} nights booked. ✓\n\nHow would you like to get from the airport to your hotel — private car, or happy to share a shuttle and save a bit?`
-            : 'Hotel booked! ✓\n\nHow would you like to get from the airport — private or shared?',
+            ? `Great taste! ${sh.name} in ${sh.location}. Which room type would you like?`
+            : 'Lovely choice! Which room type would you like?',
+          delay: 1500,
+          roomTypeOptions,
+        },
+      ],
+    },
+
+    // Step 7: Room type selected → Ask about transfer preference
+    {
+      trigger: 'cardSelect',
+      userMessage: sr
+        ? `${sr.name}`
+        : 'This room type',
+      assistantMessages: [
+        {
+          content: sr
+            ? `${sr.name}${sr.surchargePerNight > 0 ? ` (+${sr.currency}${sr.surchargePerNight}/night)` : ' — included'}, great pick! ${sh ? `${sh.nights} nights booked. ✓` : 'Booked! ✓'}\n\nHow would you like to get from the airport to your hotel — private car, or happy to share a shuttle and save a bit?`
+            : 'Room confirmed! ✓\n\nHow would you like to get from the airport — private or shared?',
           delay: 1500,
         },
       ],
     },
 
-    // Step 7: User responds about transfer preference → Show transfers
+    // Step 8: User responds about transfer preference → Show transfers
     {
       trigger: 'userInput',
       userMessage: 'Private would be nice, what are the options?',
@@ -368,7 +412,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 8: Transfer selected → Ask about experiences
+    // Step 9: Transfer selected → Ask about experiences
     {
       trigger: 'cardSelect',
       userMessage: st
@@ -384,7 +428,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 9: User responds about experience preference → Show experiences
+    // Step 10: User responds about experience preference → Show experiences
     {
       trigger: 'userInput',
       userMessage: 'A mix of sightseeing and food experiences',
@@ -397,7 +441,7 @@ export function getScriptedConversation(state: ConversationState): ScriptStep[] 
       ],
     },
 
-    // Step 10: Experiences selected → Trip confirmation with humanised summary
+    // Step 11: Experiences selected → Trip confirmation with humanised summary
     {
       trigger: 'cardSelect',
       userMessage: se.length > 0

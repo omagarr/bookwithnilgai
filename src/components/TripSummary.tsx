@@ -82,7 +82,7 @@ export default function TripSummary({ data, onBook, animationDelay = 0 }: TripSu
           icon={<HotelIcon />}
           category="Hotel"
           label={data.hotel.label}
-          details={data.hotel.details}
+          details={`${data.hotel.details}${data.hotel.roomType ? ` · ${data.hotel.roomType}` : ''}`}
           price={data.hotel.price}
           currency={data.currency}
         />
